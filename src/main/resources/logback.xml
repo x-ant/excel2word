@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration scan="false">
+    <contextName>excel2word</contextName>
+
+    <conversionRule conversionWord="shortPkg" converterClass="com.xant.component.SimplifiedPackageConverter"/>
+
+    <property name="LOG.PATTERN" value="%d{HH:mm:ss.SSS} [%thread] %-5level %shortPkg - %msg%n"/>
+    <property name="LOG.ENCODING" value="${log.encoding:-UTF-8}"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${LOG.PATTERN}</pattern>
+            <charset>${LOG.ENCODING}</charset>
+        </encoder>
+    </appender>
+
+    <logger name="com.deepoove.poi" level="ERROR" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+</configuration>
