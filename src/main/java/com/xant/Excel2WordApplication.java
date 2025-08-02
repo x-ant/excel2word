@@ -114,7 +114,7 @@ public class Excel2WordApplication {
         } catch (Exception e) {
             log.error("文件处理异常，请联系开发人员", e);
         } finally {
-            log.info("程序执行完毕，按任意键退出...");
+            log.info("程序执行完毕，按Enter键退出...");
             try {
                 System.in.read();
             } catch (IOException ignored) {
