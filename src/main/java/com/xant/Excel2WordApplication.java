@@ -116,8 +116,8 @@ public class Excel2WordApplication {
         } finally {
             log.info("程序执行完毕，按Enter键退出...");
             try {
-                System.in.read();
-            } catch (IOException ignored) {
+                new Scanner(System.in).nextLine();
+            } catch (Exception ignored) {
             }
         }
     }
