@@ -1,4 +1,4 @@
-package com.xant;
+package com.xant.util;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
@@ -7,61 +7,62 @@ import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.sax.handler.RowHandler;
 import com.deepoove.poi.XWPFTemplate;
 import com.deepoove.poi.config.Configure;
+import com.xant.entity.ConfigPO;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * excel填充word模板
+ * 根据word模板，使用excel数据生成word文件
  *
  * @author xuhq
  */
 @Slf4j
-public class Excel2WordApplication {
+public class Excel2WordUtil {
 
-    private static final String PROJECT_ROOT = System.getProperty("user.dir");
-
-    public static void main(String[] args) {
-
+    public static void generateWordFromExcel(ConfigPO configPO) {
         try {
-            Properties properties = new Properties();
-            File configFile = new File(PROJECT_ROOT, "config.properties");
-            if (configFile.exists()) {
-                properties.load(new FileReader(configFile));
-            }
-
-            String prefix = properties.getProperty("template.prefix", "${");
-            String suffix = properties.getProperty("template.suffix", "}");
-            String inputDir = properties.getProperty("input.dir", PROJECT_ROOT);
-            String outputDir = properties.getProperty("output.dir", PROJECT_ROOT);
-            String templateFile = properties.getProperty("template.file", PROJECT_ROOT + File.separator + "template.docx");
-            log.info("当前读取excel文件的默认目录为：{}", inputDir);
-            if (!FileUtil.exist(inputDir)) {
-                log.error("输入excel目录不存在，结束执行，当前来源excel目录为：{}", inputDir);
+            log.info("当前模板word文件的为：{}", configPO.getTemplateFile());
+            if (StrUtil.isEmpty(configPO.getTemplateFile())) {
+                log.error("模板文件为空，结束执行");
                 return;
             }
-            log.info("当前输出word文件的默认目录为：{}", outputDir);
-            if (!FileUtil.exist(outputDir)) {
-                log.error("输出word目录不存在，结束执行，当前输出word目录为：{}", outputDir);
+            if (!FileUtil.exist(configPO.getTemplateFile())) {
+                log.error("模板文件不存在，结束执行，当前模板文件为：{}", configPO.getTemplateFile());
                 return;
             }
-            log.info("当前模板word文件的为：{}", templateFile);
-            if (!FileUtil.exist(templateFile)) {
-                log.error("模板文件不存在，结束执行，当前模板文件为：{}", templateFile);
+            log.info("当前读取excel文件的默认目录为：{}", configPO.getInputDir());
+            if (StrUtil.isEmpty(configPO.getInputDir())) {
+                log.error("输入excel目录为空，结束执行");
+                return;
+            }
+            if (!FileUtil.exist(configPO.getInputDir())) {
+                log.error("输入excel目录不存在，结束执行，当前来源excel目录为：{}", configPO.getInputDir());
+                return;
+            }
+            log.info("当前输出word文件的默认目录为：{}", configPO.getOutputDir());
+            if (StrUtil.isEmpty(configPO.getOutputDir())) {
+                log.error("输出word目录为空，结束执行");
+                return;
+            }
+            if (!FileUtil.exist(configPO.getOutputDir())) {
+                log.error("输出word目录不存在，结束执行，当前输出word目录为：{}", configPO.getOutputDir());
                 return;
             }
 
             // 配置word的模板语法
-            Configure configure = Configure.builder().buildGramer(prefix, suffix).build();
+            Configure configure = Configure.builder().buildGramer(configPO.getTemplatePrefix(), configPO.getTemplateSuffix()).build();
             // 数据填充并生成新Word
-            try (XWPFTemplate template = XWPFTemplate.compile(templateFile, configure)) {
-                Files.walkFileTree(Paths.get(inputDir), new SimpleFileVisitor<Path>() {
+            try (XWPFTemplate template = XWPFTemplate.compile(configPO.getTemplateFile(), configure)) {
+                Files.walkFileTree(Paths.get(configPO.getInputDir()), new SimpleFileVisitor<Path>() {
                     @Override
                     public FileVisitResult visitFile(Path filePath, BasicFileAttributes attrs) throws IOException {
                         String extName = FileUtil.extName(filePath.getFileName().toString());
@@ -98,7 +99,7 @@ public class Excel2WordApplication {
                             };
                             ExcelUtil.readBySax(excelFile, -1, rowHandler);
                             String mainName = FileUtil.mainName(excelFile);
-                            String outputFile = outputDir + File.separator + mainName + ".docx";
+                            String outputFile = configPO.getOutputDir() + File.separator + mainName + ".docx";
                             if (FileUtil.exist(outputFile)) {
                                 FileUtil.del(outputFile);
                             }
@@ -113,12 +114,6 @@ public class Excel2WordApplication {
             }
         } catch (Exception e) {
             log.error("文件处理异常，请联系开发人员", e);
-        } finally {
-            log.info("程序执行完毕，按Enter键退出...");
-            try {
-                new Scanner(System.in).nextLine();
-            } catch (Exception ignored) {
-            }
         }
     }
 }

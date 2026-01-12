@@ -14,12 +14,22 @@
         </encoder>
     </appender>
 
-    <logger name="com.deepoove.poi" level="ERROR" additivity="false">
+    <!-- 2. 自定义 TextArea 输出 -->
+    <appender name="TEXT_AREA" class="com.xant.component.TextAreaAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%d{HH:mm:ss} %-5level - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <logger name="com.xant" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="TEXT_AREA"/>
     </logger>
 
-    <root level="INFO">
+    <root level="WARN">
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="TEXT_AREA"/>
     </root>
 
 </configuration>
