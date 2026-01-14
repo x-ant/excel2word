@@ -7,6 +7,7 @@ open module TestJavaFx {
     requires MaterialFX;
 
     requires cn.hutool;
+    requires java.sql;
     requires poi.tl;
     requires logback.classic;
     requires logback.core;
