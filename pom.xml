@@ -56,11 +56,28 @@
             <groupId>com.deepoove</groupId>
             <artifactId>poi-tl</artifactId>
             <version>1.12.1</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>log4j-api</artifactId>
+                    <groupId>org.apache.logging.log4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.2.13</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-to-slf4j</artifactId>
+            <version>2.17.2</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-api</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -71,6 +88,7 @@
     </dependencies>
 
     <build>
+        <finalName>excel2word</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -79,468 +97,48 @@
                 <configuration>
                     <source>17</source>
                     <target>17</target>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
-                        </path>
-                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
+
             <plugin>
-                <groupId>org.openjfx</groupId>
-                <artifactId>javafx-maven-plugin</artifactId>
-                <version>0.0.8</version>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>3.5.8</version>
+                <configuration>
+                    <mainClass>com.xant.MainApplication</mainClass>
+                </configuration>
                 <executions>
                     <execution>
-                        <!-- Default configuration for running with: mvn clean javafx:run -->
-                        <id>default-cli</id>
-                        <configuration>
-                            <mainClass>excel2word/com.xant.MainApplication</mainClass>
-                            <launcher>app</launcher>
-                            <jlinkZipName>app</jlinkZipName>
-                            <jlinkImageName>app</jlinkImageName>
-                            <noManPages>true</noManPages>
-                            <stripDebug>true</stripDebug>
-                            <noHeaderFiles>true</noHeaderFiles>
-                        </configuration>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- 为jpackage打包创建一个纯净的输入目录 -->
             <plugin>
-                <groupId>org.moditect</groupId>
-                <artifactId>moditect-maven-plugin</artifactId>
-                <version>1.0.0.RC2</version>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.2.0</version>
                 <executions>
                     <execution>
-                        <phase>generate-resources</phase>
+                        <id>prepare-jpackage-input</id>
+                        <phase>package</phase>
                         <goals>
-                            <goal>add-module-info</goal>
+                            <goal>run</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${project.basedir}/src/main/resources/libs</outputDirectory>
-                            <!--覆盖重复文件，防止报错-->
-                            <overwriteExistingFiles>true</overwriteExistingFiles>
-                            <modules>
-                                <module>
-                                    <!-- 配置需要模块化jar的Maven坐标 -->
-                                    <artifact>
-                                        <groupId>cn.hutool</groupId>
-                                        <artifactId>hutool-all</artifactId>
-                                        <version>5.8.38</version>
-                                    </artifact>
-                                    <!-- 配置模块声明信息 -->
-                                    <moduleInfoSource>
-                                        module cn.hutool {
-                                        requires transitive java.compiler;
-                                        requires transitive java.datatransfer;
-                                        requires transitive java.desktop;
-                                        requires transitive java.logging;
-                                        requires transitive java.management;
-                                        requires transitive java.naming;
-                                        requires transitive java.scripting;
-                                        requires transitive java.sql;
-                                        requires transitive java.xml;
-                                        requires transitive jdk.httpserver;
-
-                                        exports cn.hutool;
-                                        exports cn.hutool.ai;
-                                        exports cn.hutool.ai.core;
-                                        exports cn.hutool.ai.model;
-                                        exports cn.hutool.ai.model.deepseek;
-                                        exports cn.hutool.ai.model.doubao;
-                                        exports cn.hutool.ai.model.grok;
-                                        exports cn.hutool.ai.model.openai;
-                                        exports cn.hutool.aop;
-                                        exports cn.hutool.aop.aspects;
-                                        exports cn.hutool.aop.interceptor;
-                                        exports cn.hutool.aop.proxy;
-                                        exports cn.hutool.bloomfilter;
-                                        exports cn.hutool.bloomfilter.bitMap;
-                                        exports cn.hutool.bloomfilter.filter;
-                                        exports cn.hutool.cache;
-                                        exports cn.hutool.cache.file;
-                                        exports cn.hutool.cache.impl;
-                                        exports cn.hutool.captcha;
-                                        exports cn.hutool.captcha.generator;
-                                        exports cn.hutool.core;
-                                        exports cn.hutool.core.annotation;
-                                        exports cn.hutool.core.annotation.scanner;
-                                        exports cn.hutool.core.bean;
-                                        exports cn.hutool.core.bean.copier;
-                                        exports cn.hutool.core.bean.copier.provider;
-                                        exports cn.hutool.core.builder;
-                                        exports cn.hutool.core.clone;
-                                        exports cn.hutool.core.codec;
-                                        exports cn.hutool.core.collection;
-                                        exports cn.hutool.core.comparator;
-                                        exports cn.hutool.core.compiler;
-                                        exports cn.hutool.core.compress;
-                                        exports cn.hutool.core.convert;
-                                        exports cn.hutool.core.convert.impl;
-                                        exports cn.hutool.core.date;
-                                        exports cn.hutool.core.date.chinese;
-                                        exports cn.hutool.core.date.format;
-                                        exports cn.hutool.core.exceptions;
-                                        exports cn.hutool.core.getter;
-                                        exports cn.hutool.core.img;
-                                        exports cn.hutool.core.img.gif;
-                                        exports cn.hutool.core.io;
-                                        exports cn.hutool.core.io.checksum;
-                                        exports cn.hutool.core.io.checksum.crc16;
-                                        exports cn.hutool.core.io.copy;
-                                        exports cn.hutool.core.io.file;
-                                        exports cn.hutool.core.io.file.visitor;
-                                        exports cn.hutool.core.io.resource;
-                                        exports cn.hutool.core.io.unit;
-                                        exports cn.hutool.core.io.watch;
-                                        exports cn.hutool.core.io.watch.watchers;
-                                        exports cn.hutool.core.lang;
-                                        exports cn.hutool.core.lang.ansi;
-                                        exports cn.hutool.core.lang.caller;
-                                        exports cn.hutool.core.lang.copier;
-                                        exports cn.hutool.core.lang.func;
-                                        exports cn.hutool.core.lang.generator;
-                                        exports cn.hutool.core.lang.hash;
-                                        exports cn.hutool.core.lang.id;
-                                        exports cn.hutool.core.lang.intern;
-                                        exports cn.hutool.core.lang.loader;
-                                        exports cn.hutool.core.lang.mutable;
-                                        exports cn.hutool.core.lang.reflect;
-                                        exports cn.hutool.core.lang.tree;
-                                        exports cn.hutool.core.lang.tree.parser;
-                                        exports cn.hutool.core.map;
-                                        exports cn.hutool.core.map.multi;
-                                        exports cn.hutool.core.math;
-                                        exports cn.hutool.core.net;
-                                        exports cn.hutool.core.net.multipart;
-                                        exports cn.hutool.core.net.url;
-                                        exports cn.hutool.core.stream;
-                                        exports cn.hutool.core.swing;
-                                        exports cn.hutool.core.swing.clipboard;
-                                        exports cn.hutool.core.text;
-                                        exports cn.hutool.core.text.csv;
-                                        exports cn.hutool.core.text.escape;
-                                        exports cn.hutool.core.text.finder;
-                                        exports cn.hutool.core.text.replacer;
-                                        exports cn.hutool.core.text.split;
-                                        exports cn.hutool.core.thread;
-                                        exports cn.hutool.core.thread.lock;
-                                        exports cn.hutool.core.thread.threadlocal;
-                                        exports cn.hutool.core.util;
-                                        exports cn.hutool.cron;
-                                        exports cn.hutool.cron.listener;
-                                        exports cn.hutool.cron.pattern;
-                                        exports cn.hutool.cron.pattern.matcher;
-                                        exports cn.hutool.cron.pattern.parser;
-                                        exports cn.hutool.cron.task;
-                                        exports cn.hutool.cron.timingwheel;
-                                        exports cn.hutool.crypto;
-                                        exports cn.hutool.crypto.asymmetric;
-                                        exports cn.hutool.crypto.digest;
-                                        exports cn.hutool.crypto.digest.mac;
-                                        exports cn.hutool.crypto.digest.otp;
-                                        exports cn.hutool.crypto.symmetric;
-                                        exports cn.hutool.crypto.symmetric.fpe;
-                                        exports cn.hutool.db;
-                                        exports cn.hutool.db.dialect;
-                                        exports cn.hutool.db.dialect.impl;
-                                        exports cn.hutool.db.ds;
-                                        exports cn.hutool.db.ds.bee;
-                                        exports cn.hutool.db.ds.c3p0;
-                                        exports cn.hutool.db.ds.dbcp;
-                                        exports cn.hutool.db.ds.druid;
-                                        exports cn.hutool.db.ds.hikari;
-                                        exports cn.hutool.db.ds.jndi;
-                                        exports cn.hutool.db.ds.pooled;
-                                        exports cn.hutool.db.ds.simple;
-                                        exports cn.hutool.db.ds.tomcat;
-                                        exports cn.hutool.db.handler;
-                                        exports cn.hutool.db.meta;
-                                        exports cn.hutool.db.nosql;
-                                        exports cn.hutool.db.nosql.mongo;
-                                        exports cn.hutool.db.nosql.redis;
-                                        exports cn.hutool.db.sql;
-                                        exports cn.hutool.db.transaction;
-                                        exports cn.hutool.dfa;
-                                        exports cn.hutool.extra;
-                                        exports cn.hutool.extra.cglib;
-                                        exports cn.hutool.extra.compress;
-                                        exports cn.hutool.extra.compress.archiver;
-                                        exports cn.hutool.extra.compress.extractor;
-                                        exports cn.hutool.extra.emoji;
-                                        exports cn.hutool.extra.expression;
-                                        exports cn.hutool.extra.expression.engine;
-                                        exports cn.hutool.extra.expression.engine.aviator;
-                                        exports cn.hutool.extra.expression.engine.jexl;
-                                        exports cn.hutool.extra.expression.engine.jfireel;
-                                        exports cn.hutool.extra.expression.engine.mvel;
-                                        exports cn.hutool.extra.expression.engine.qlexpress;
-                                        exports cn.hutool.extra.expression.engine.rhino;
-                                        exports cn.hutool.extra.expression.engine.spel;
-                                        exports cn.hutool.extra.ftp;
-                                        exports cn.hutool.extra.mail;
-                                        exports cn.hutool.extra.pinyin;
-                                        exports cn.hutool.extra.pinyin.engine;
-                                        exports cn.hutool.extra.pinyin.engine.bopomofo4j;
-                                        exports cn.hutool.extra.pinyin.engine.houbbpinyin;
-                                        exports cn.hutool.extra.pinyin.engine.jpinyin;
-                                        exports cn.hutool.extra.pinyin.engine.pinyin4j;
-                                        exports cn.hutool.extra.pinyin.engine.tinypinyin;
-                                        exports cn.hutool.extra.qrcode;
-                                        exports cn.hutool.extra.servlet;
-                                        exports cn.hutool.extra.spring;
-                                        exports cn.hutool.extra.ssh;
-                                        exports cn.hutool.extra.template;
-                                        exports cn.hutool.extra.template.engine;
-                                        exports cn.hutool.extra.template.engine.beetl;
-                                        exports cn.hutool.extra.template.engine.enjoy;
-                                        exports cn.hutool.extra.template.engine.freemarker;
-                                        exports cn.hutool.extra.template.engine.jetbrick;
-                                        exports cn.hutool.extra.template.engine.jetbrick.loader;
-                                        exports cn.hutool.extra.template.engine.rythm;
-                                        exports cn.hutool.extra.template.engine.thymeleaf;
-                                        exports cn.hutool.extra.template.engine.velocity;
-                                        exports cn.hutool.extra.template.engine.wit;
-                                        exports cn.hutool.extra.tokenizer;
-                                        exports cn.hutool.extra.tokenizer.engine;
-                                        exports cn.hutool.extra.tokenizer.engine.analysis;
-                                        exports cn.hutool.extra.tokenizer.engine.ansj;
-                                        exports cn.hutool.extra.tokenizer.engine.hanlp;
-                                        exports cn.hutool.extra.tokenizer.engine.ikanalyzer;
-                                        exports cn.hutool.extra.tokenizer.engine.jcseg;
-                                        exports cn.hutool.extra.tokenizer.engine.jieba;
-                                        exports cn.hutool.extra.tokenizer.engine.mmseg;
-                                        exports cn.hutool.extra.tokenizer.engine.mynlp;
-                                        exports cn.hutool.extra.tokenizer.engine.word;
-                                        exports cn.hutool.extra.validation;
-                                        exports cn.hutool.http;
-                                        exports cn.hutool.http.body;
-                                        exports cn.hutool.http.cookie;
-                                        exports cn.hutool.http.server;
-                                        exports cn.hutool.http.server.action;
-                                        exports cn.hutool.http.server.filter;
-                                        exports cn.hutool.http.server.handler;
-                                        exports cn.hutool.http.ssl;
-                                        exports cn.hutool.http.useragent;
-                                        exports cn.hutool.http.webservice;
-                                        exports cn.hutool.json;
-                                        exports cn.hutool.json.serialize;
-                                        exports cn.hutool.json.xml;
-                                        exports cn.hutool.jwt;
-                                        exports cn.hutool.jwt.signers;
-                                        exports cn.hutool.log;
-                                        exports cn.hutool.log.dialect;
-                                        exports cn.hutool.log.dialect.commons;
-                                        exports cn.hutool.log.dialect.console;
-                                        exports cn.hutool.log.dialect.jboss;
-                                        exports cn.hutool.log.dialect.jdk;
-                                        exports cn.hutool.log.dialect.log4j;
-                                        exports cn.hutool.log.dialect.log4j2;
-                                        exports cn.hutool.log.dialect.logtube;
-                                        exports cn.hutool.log.dialect.slf4j;
-                                        exports cn.hutool.log.dialect.tinylog;
-                                        exports cn.hutool.log.level;
-                                        exports cn.hutool.poi;
-                                        exports cn.hutool.poi.excel;
-                                        exports cn.hutool.poi.excel.cell;
-                                        exports cn.hutool.poi.excel.cell.setters;
-                                        exports cn.hutool.poi.excel.cell.values;
-                                        exports cn.hutool.poi.excel.editors;
-                                        exports cn.hutool.poi.excel.reader;
-                                        exports cn.hutool.poi.excel.sax;
-                                        exports cn.hutool.poi.excel.sax.handler;
-                                        exports cn.hutool.poi.excel.style;
-                                        exports cn.hutool.poi.exceptions;
-                                        exports cn.hutool.poi.ofd;
-                                        exports cn.hutool.poi.word;
-                                        exports cn.hutool.script;
-                                        exports cn.hutool.setting;
-                                        exports cn.hutool.setting.dialect;
-                                        exports cn.hutool.setting.profile;
-                                        exports cn.hutool.setting.yaml;
-                                        exports cn.hutool.socket;
-                                        exports cn.hutool.socket.aio;
-                                        exports cn.hutool.socket.nio;
-                                        exports cn.hutool.socket.protocol;
-                                        exports cn.hutool.system;
-                                        exports cn.hutool.system.oshi;
-
-                                        provides cn.hutool.ai.core.AIConfig with
-                                        cn.hutool.ai.model.deepseek.DeepSeekConfig,
-                                        cn.hutool.ai.model.openai.OpenaiConfig,
-                                        cn.hutool.ai.model.doubao.DoubaoConfig,
-                                        cn.hutool.ai.model.grok.GrokConfig;
-                                        provides cn.hutool.ai.core.AIServiceProvider with
-                                        cn.hutool.ai.model.deepseek.DeepSeekProvider,
-                                        cn.hutool.ai.model.openai.OpenaiProvider,
-                                        cn.hutool.ai.model.doubao.DoubaoProvider,
-                                        cn.hutool.ai.model.grok.GrokProvider;
-                                        provides cn.hutool.aop.proxy.ProxyFactory with
-                                        cn.hutool.aop.proxy.CglibProxyFactory,
-                                        cn.hutool.aop.proxy.SpringCglibProxyFactory,
-                                        cn.hutool.aop.proxy.JdkProxyFactory;
-                                        provides cn.hutool.extra.expression.ExpressionEngine with
-                                        cn.hutool.extra.expression.engine.aviator.AviatorEngine,
-                                        cn.hutool.extra.expression.engine.jexl.JexlEngine,
-                                        cn.hutool.extra.expression.engine.mvel.MvelEngine,
-                                        cn.hutool.extra.expression.engine.jfireel.JfireELEngine,
-                                        cn.hutool.extra.expression.engine.spel.SpELEngine,
-                                        cn.hutool.extra.expression.engine.rhino.RhinoEngine,
-                                        cn.hutool.extra.expression.engine.qlexpress.QLExpressEngine;
-                                        provides cn.hutool.extra.pinyin.PinyinEngine with
-                                        cn.hutool.extra.pinyin.engine.tinypinyin.TinyPinyinEngine,
-                                        cn.hutool.extra.pinyin.engine.jpinyin.JPinyinEngine,
-                                        cn.hutool.extra.pinyin.engine.pinyin4j.Pinyin4jEngine,
-                                        cn.hutool.extra.pinyin.engine.bopomofo4j.Bopomofo4jEngine,
-                                        cn.hutool.extra.pinyin.engine.houbbpinyin.HoubbPinyinEngine;
-                                        provides cn.hutool.extra.template.TemplateEngine with
-                                        cn.hutool.extra.template.engine.beetl.BeetlEngine,
-                                        cn.hutool.extra.template.engine.freemarker.FreemarkerEngine,
-                                        cn.hutool.extra.template.engine.velocity.VelocityEngine,
-                                        cn.hutool.extra.template.engine.rythm.RythmEngine,
-                                        cn.hutool.extra.template.engine.enjoy.EnjoyEngine,
-                                        cn.hutool.extra.template.engine.thymeleaf.ThymeleafEngine,
-                                        cn.hutool.extra.template.engine.wit.WitEngine,
-                                        cn.hutool.extra.template.engine.jetbrick.JetbrickEngine;
-                                        provides cn.hutool.extra.tokenizer.TokenizerEngine with
-                                        cn.hutool.extra.tokenizer.engine.ansj.AnsjEngine,
-                                        cn.hutool.extra.tokenizer.engine.hanlp.HanLPEngine,
-                                        cn.hutool.extra.tokenizer.engine.ikanalyzer.IKAnalyzerEngine,
-                                        cn.hutool.extra.tokenizer.engine.jcseg.JcsegEngine,
-                                        cn.hutool.extra.tokenizer.engine.jieba.JiebaEngine,
-                                        cn.hutool.extra.tokenizer.engine.mmseg.MmsegEngine,
-                                        cn.hutool.extra.tokenizer.engine.word.WordEngine,
-                                        cn.hutool.extra.tokenizer.engine.analysis.SmartcnEngine,
-                                        cn.hutool.extra.tokenizer.engine.mynlp.MynlpEngine;
-                                        provides cn.hutool.log.LogFactory with
-                                        cn.hutool.log.dialect.logtube.LogTubeLogFactory,
-                                        cn.hutool.log.dialect.slf4j.Slf4jLogFactory,
-                                        cn.hutool.log.dialect.log4j2.Log4j2LogFactory,
-                                        cn.hutool.log.dialect.log4j.Log4jLogFactory,
-                                        cn.hutool.log.dialect.commons.ApacheCommonsLogFactory,
-                                        cn.hutool.log.dialect.tinylog.TinyLogFactory,
-                                        cn.hutool.log.dialect.tinylog.TinyLog2Factory,
-                                        cn.hutool.log.dialect.jboss.JbossLogFactory;
-                                        }
-                                    </moduleInfoSource>
-                                </module>
-                                <module>
-                                    <!-- 配置需要模块化jar的Maven坐标 -->
-                                    <artifact>
-                                        <groupId>org.apache.xmlgraphics</groupId>
-                                        <artifactId>batik-awt-util</artifactId>
-                                        <version>1.14</version>
-                                    </artifact>
-                                    <!-- 配置模块声明信息 -->
-                                    <moduleInfoSource>
-                                        module batik.awt.util {
-                                        requires transitive java.desktop;
-
-                                        exports org.apache.batik.ext.awt;
-                                        exports org.apache.batik.ext.awt.color;
-                                        exports org.apache.batik.ext.awt.font;
-                                        exports org.apache.batik.ext.awt.g2d;
-                                        exports org.apache.batik.ext.awt.geom;
-                                        exports org.apache.batik.ext.awt.image;
-                                        exports org.apache.batik.ext.awt.image.renderable;
-                                        exports org.apache.batik.ext.awt.image.rendered;
-                                        exports org.apache.batik.ext.awt.image.spi;
-                                        exports org.apache.batik.ext.swing;
-
-                                        }
-                                    </moduleInfoSource>
-                                </module>
-                                <module>
-                                    <!-- 配置需要模块化jar的Maven坐标 -->
-                                    <artifact>
-                                        <groupId>org.apache.xmlgraphics</groupId>
-                                        <artifactId>batik-i18n</artifactId>
-                                        <version>1.14</version>
-                                    </artifact>
-                                    <!-- 配置模块声明信息 -->
-                                    <moduleInfoSource>
-                                        module batik.i18n {
-                                        exports org.apache.batik.i18n;
-
-                                        }
-                                    </moduleInfoSource>
-                                </module>
-                                <module>
-                                    <!-- 配置需要模块化jar的Maven坐标 -->
-                                    <artifact>
-                                        <groupId>org.apache.xmlgraphics</groupId>
-                                        <artifactId>batik-util</artifactId>
-                                        <version>1.14</version>
-                                    </artifact>
-                                    <!-- 配置模块声明信息 -->
-                                    <moduleInfoSource>
-                                        module batik.util {
-                                        requires transitive batik.i18n;
-                                        requires transitive java.desktop;
-
-                                        exports org.apache.batik;
-                                        exports org.apache.batik.util;
-                                        exports org.apache.batik.util.io;
-                                        exports org.apache.batik.util.resources;
-
-                                        }
-                                    </moduleInfoSource>
-                                </module>
-                                <module>
-                                    <!-- 配置需要模块化jar的Maven坐标 -->
-                                    <artifact>
-                                        <groupId>ch.qos.logback</groupId>
-                                        <artifactId>logback-classic</artifactId>
-                                        <version>1.2.13</version>
-                                    </artifact>
-                                    <!-- 配置模块声明信息 -->
-                                    <moduleInfoSource>
-                                        module logback.classic {
-                                        requires java.naming;
-
-                                        requires transitive java.logging;
-                                        requires transitive java.management;
-                                        requires transitive java.xml;
-
-                                        exports ch.qos.logback.classic;
-                                        exports ch.qos.logback.classic.boolex;
-                                        exports ch.qos.logback.classic.db.names;
-                                        exports ch.qos.logback.classic.encoder;
-                                        exports ch.qos.logback.classic.filter;
-                                        exports ch.qos.logback.classic.helpers;
-                                        exports ch.qos.logback.classic.html;
-                                        exports ch.qos.logback.classic.jmx;
-                                        exports ch.qos.logback.classic.joran;
-                                        exports ch.qos.logback.classic.joran.action;
-                                        exports ch.qos.logback.classic.jul;
-                                        exports ch.qos.logback.classic.layout;
-                                        exports ch.qos.logback.classic.log4j;
-                                        exports ch.qos.logback.classic.net;
-                                        exports ch.qos.logback.classic.net.server;
-                                        exports ch.qos.logback.classic.pattern;
-                                        exports ch.qos.logback.classic.pattern.color;
-                                        exports ch.qos.logback.classic.selector;
-                                        exports ch.qos.logback.classic.selector.servlet;
-                                        exports ch.qos.logback.classic.servlet;
-                                        exports ch.qos.logback.classic.sift;
-                                        exports ch.qos.logback.classic.spi;
-                                        exports ch.qos.logback.classic.turbo;
-                                        exports ch.qos.logback.classic.util;
-                                        exports org.slf4j.impl;
-
-                                        provides javax.servlet.ServletContainerInitializer with
-                                        ch.qos.logback.classic.servlet.LogbackServletContainerInitializer;
-
-                                        }
-                                    </moduleInfoSource>
-                                </module>
-                            </modules>
+                            <target>
+                                <delete dir="${project.build.directory}/pure"/>
+                                <mkdir dir="${project.build.directory}/pure"/>
+                                <copy file="${project.build.directory}/${project.build.finalName}.jar"
+                                      tofile="${project.build.directory}/pure/${project.build.finalName}.jar"/>
+                            </target>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
+
 </project>

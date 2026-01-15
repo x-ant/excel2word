@@ -1,0 +1,9 @@
+--name "execl2word"
+--type app-image
+--input target/pure
+--main-jar excel2word.jar
+--module-path "C:\\JDK17\\jmods;C:\\javafx-jmods-21.0.9"
+--add-modules ALL-MODULE-PATH
+--dest dist
+--java-options "-Dfile.encoding=UTF-8"
+--verbose
