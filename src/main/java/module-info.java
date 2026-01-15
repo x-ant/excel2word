@@ -8,6 +8,7 @@ open module TestJavaFx {
 
     requires cn.hutool;
     requires java.sql;
+    requires org.apache.poi.ooxml;
     requires poi.tl;
     requires logback.classic;
     requires logback.core;
