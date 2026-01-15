@@ -24,6 +24,11 @@ public class MainApplication extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
+        // 设置 JavaFX 线程的异常处理器
+        Thread.currentThread().setUncaughtExceptionHandler((thread, throwable) -> {
+            log.error("统一异常记录：", throwable);
+        });
+
         UserAgentBuilder.builder()
                 .themes(JavaFXThemes.MODENA)
                 .themes(MaterialFXStylesheets.forAssemble(true))

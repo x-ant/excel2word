@@ -1,13 +1,13 @@
 package com.xant.manager;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.json.JSONUtil;
 import com.xant.entity.ConfigPO;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.*;
-import java.util.Map;
-import java.util.Properties;
+import java.io.File;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 配置实体类管理
@@ -22,21 +22,18 @@ public class ConfigManager {
      * 程序启动的路径
      */
     private static final String PROJECT_ROOT = System.getProperty("user.dir");
+    private static final String CONFIG_FILE = PROJECT_ROOT + File.separator + "config.json";
 
     private static class SingletonHolder {
         private static ConfigPO INSTANCE = new ConfigPO();
 
         static {
-            Properties properties = new Properties();
-            File configFile = new File(PROJECT_ROOT, "config.properties");
+            File configFile = new File(CONFIG_FILE);
+            log.info("读取配置文件路径: {}", configFile.getAbsolutePath());
             if (configFile.exists()) {
-                try {
-                    properties.load(new FileReader(configFile));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                String configJsonStr = FileUtil.readString(configFile, StandardCharsets.UTF_8);
+                BeanUtil.fillBeanWithMap(JSONUtil.parseObj(configJsonStr), INSTANCE, true);
             }
-            BeanUtil.fillBeanWithMap(properties, INSTANCE, true);
         }
     }
 
@@ -51,15 +48,14 @@ public class ConfigManager {
         return BeanUtil.copyProperties(SingletonHolder.INSTANCE, ConfigPO.class);
     }
 
-    @SneakyThrows
     public static void setConfigPO(ConfigPO configPO) {
-        Map<String, Object> field2ValueMap = BeanUtil.beanToMap(configPO);
-        Properties properties = new Properties();
-        properties.putAll(field2ValueMap);
-        try (OutputStream output = new FileOutputStream("config.properties")) {
-            properties.store(output, "Config文件");
+        File configFile = new File(CONFIG_FILE);
+        if (!FileUtil.exist(configFile)) {
+            FileUtil.touch(configFile);
         }
-        SingletonHolder.INSTANCE = configPO;
+        log.info("写入配置文件路径: {}", configFile.getAbsolutePath());
+        FileUtil.writeString(JSONUtil.toJsonPrettyStr(configPO), configFile, StandardCharsets.UTF_8);
+        BeanUtil.copyProperties(configPO, SingletonHolder.INSTANCE, true);
     }
 
 }
