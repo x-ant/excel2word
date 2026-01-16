@@ -7,6 +7,7 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,6 +40,7 @@ public class MainApplication extends Application {
 
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/template/MainPane.fxml"));
         Scene scene = new Scene(fxmlLoader.load());
+        stage.getIcons().add(new Image("/icon/excel2word.png"));
         stage.setTitle("Excel2Word");
         stage.setScene(scene);
         stage.setResizable(false);

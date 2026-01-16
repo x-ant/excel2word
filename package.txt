@@ -1,5 +1,5 @@
 --name "execl2word"
---type app-image
+--type msi
 --input target/pure
 --main-jar excel2word.jar
 --module-path "C:\\JDK17\\jmods;C:\\javafx-jmods-21.0.9"
@@ -7,3 +7,11 @@
 --dest dist
 --java-options "-Dfile.encoding=UTF-8"
 --verbose
+--icon "./src/main/resources/icon/excel2word.ico"
+--win-shortcut
+--win-dir-chooser
+--win-upgrade-uuid "7b88d7d4-e683-8dfe-eecb-9ae8e553c960"
+--app-version 1.0
+--description "根据word模板将excel中数据填充生成新word"
+--vendor xhq
+--copyright xhq
