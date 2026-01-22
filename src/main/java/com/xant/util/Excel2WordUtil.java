@@ -7,6 +7,7 @@ import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.sax.handler.RowHandler;
 import com.deepoove.poi.XWPFTemplate;
 import com.deepoove.poi.config.Configure;
+import com.deepoove.poi.template.MetaTemplate;
 import com.xant.entity.ConfigPO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,10 +16,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 根据word模板，使用excel数据生成word文件
@@ -62,6 +60,16 @@ public class Excel2WordUtil {
             Configure configure = Configure.builder().buildGramer(configPO.getTemplatePrefix(), configPO.getTemplateSuffix()).build();
             // 数据填充并生成新Word
             try (XWPFTemplate template = XWPFTemplate.compile(configPO.getTemplateFile(), configure)) {
+                // region ========== 收集变量 ==========
+                int prefixLength = StrUtil.length(configPO.getTemplatePrefix());
+                int suffixLength = StrUtil.length(configPO.getTemplateSuffix());
+                List<MetaTemplate> elementTemplateList = template.getElementTemplates();
+                Set<String> variableSet = new HashSet<>();
+                for (MetaTemplate metaTemplate : elementTemplateList) {
+                    String metaTemplateVariable = metaTemplate.variable();
+                    variableSet.add(StrUtil.sub(metaTemplateVariable, prefixLength, -suffixLength));
+                }
+                // endregion
                 Files.walkFileTree(Paths.get(configPO.getInputDir()), new SimpleFileVisitor<Path>() {
                     @Override
                     public FileVisitResult visitFile(Path filePath, BasicFileAttributes attrs) throws IOException {
@@ -88,7 +96,10 @@ public class Excel2WordUtil {
                                         // 替换表达式不能以数字开头
                                         int from1SheetIndex = sheetIndex + 1;
                                         long from1RowIndex = rowIndex + 1;
-                                        dataModel.put("S" + from1SheetIndex + colName + from1RowIndex, currentData);
+                                        String variable = "S" + from1SheetIndex + colName + from1RowIndex;
+                                        if (variableSet.contains(variable)) {
+                                            dataModel.put(variable, currentData);
+                                        }
                                     }
                                 }
 
@@ -103,8 +114,8 @@ public class Excel2WordUtil {
                             if (FileUtil.exist(outputFile)) {
                                 FileUtil.del(outputFile);
                             }
-                            try (FileOutputStream out = new FileOutputStream(outputFile)) {
-                                template.render(dataModel).write(out);
+                            try (FileOutputStream outputStream = new FileOutputStream(outputFile)) {
+                                template.render(dataModel).write(outputStream);
                                 log.info("已生成目标文件：{}", outputFile);
                             }
                         }

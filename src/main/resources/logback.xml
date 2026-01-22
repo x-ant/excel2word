@@ -2,7 +2,7 @@
 <configuration scan="false">
     <contextName>excel2word</contextName>
 
-    <conversionRule conversionWord="shortPkg" converterClass="com.xant.component.SimplifiedPackageConverter"/>
+    <conversionRule conversionWord="shortPkg" converterClass="com.xant.component.log.SimplifiedPackageConverter"/>
 
     <property name="LOG.PATTERN" value="%d{HH:mm:ss.SSS} [%thread] %-5level %shortPkg - %msg%n"/>
     <property name="LOG.ENCODING" value="${log.encoding:-UTF-8}"/>
@@ -15,7 +15,7 @@
     </appender>
 
     <!-- 2. 自定义 TextArea 输出 -->
-    <appender name="TEXT_AREA" class="com.xant.component.TextAreaAppender">
+    <appender name="TEXT_AREA" class="com.xant.component.log.TextAreaAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>%d{HH:mm:ss} %-5level - %msg%n</pattern>
             <charset>UTF-8</charset>

@@ -2,7 +2,7 @@ package com.xant.controller;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
-import com.xant.component.TextAreaAppender;
+import com.xant.component.log.TextAreaAppender;
 import com.xant.entity.ConfigPO;
 import com.xant.manager.ConfigManager;
 import com.xant.util.Excel2WordUtil;
@@ -116,7 +116,7 @@ public class MainPaneController {
         generateButton.setDisable(true);
         generateSpinner.setVisible(true);
 
-        ConfigPO configPO = ConfigManager.getSingletonConfigPO();
+        ConfigPO configPO = paddingCurrentValue(ConfigManager.getPrototypeConfigPO());
         executor.execute(() -> {
             Excel2WordUtil.generateWordFromExcel(configPO);
             Platform.runLater(() -> {
@@ -131,10 +131,7 @@ public class MainPaneController {
         if (MouseButton.PRIMARY != event.getButton()) {
             return;
         }
-        ConfigPO configPO = ConfigManager.getSingletonConfigPO();
-        configPO.setTemplateFile(templateFile.getText());
-        configPO.setInputDir(inputDir.getText());
-        configPO.setOutputDir(outputDir.getText());
+        ConfigPO configPO = paddingCurrentValue(ConfigManager.getSingletonConfigPO());
         ConfigManager.setConfigPO(configPO);
         defaultButton.setDisable(true);
     }
@@ -210,6 +207,13 @@ public class MainPaneController {
     private void setDefaultButton(ConfigPO newConfigPO) {
         ConfigPO configPO = ConfigManager.getSingletonConfigPO();
         defaultButton.setDisable(configPO.equals(newConfigPO));
+    }
+
+    private ConfigPO paddingCurrentValue(ConfigPO configPO) {
+        configPO.setTemplateFile(templateFile.getText());
+        configPO.setInputDir(inputDir.getText());
+        configPO.setOutputDir(outputDir.getText());
+        return configPO;
     }
 
 }

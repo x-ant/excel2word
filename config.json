@@ -1,0 +1,7 @@
+{
+    "templatePrefix": "${",
+    "templateSuffix": "}",
+    "templateFile": "D:\\exe4j\\excel2word\\template.docx",
+    "inputDir": "D:\\exe4j\\excel2word",
+    "outputDir": "D:\\exe4j\\excel2word"
+}

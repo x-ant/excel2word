@@ -1,4 +1,4 @@
-package com.xant.component;
+package com.xant.component.log;
 
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
