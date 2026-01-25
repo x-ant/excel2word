@@ -1,8 +1,9 @@
 package com.xant.util;
 
-import com.xant.component.SqlSessionManagerSingleton;
+import com.xant.component.jdbc.ThreadSqlSession;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionManager;
 
 import java.util.Objects;
@@ -21,9 +22,7 @@ public class TransactionUtil {
 
     @SneakyThrows
     public static <T> T doTransactionWithRequired(Supplier<T> supplier) {
-        SqlSessionManager transactionManager = SqlSessionManagerSingleton.getSingleton();
-        transactionManager.startManagedSession();
-
+        SqlSession sqlSession = ThreadSqlSession.getOrCreateSqlSession();
         T result = null;
         Throwable executeException = null;
         try {
@@ -34,13 +33,13 @@ public class TransactionUtil {
 
         if (!Objects.isNull(executeException)) {
             try {
-                transactionManager.rollback();
+                sqlSession.rollback();
             } catch (Throwable tr2) {
                 log.error("数据库事务回滚失败！", tr2);
             }
             throw executeException;
         } else {
-            transactionManager.commit();
+            sqlSession.commit();
         }
         return result;
     }

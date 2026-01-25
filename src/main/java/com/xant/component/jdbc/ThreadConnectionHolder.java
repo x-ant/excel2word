@@ -10,7 +10,7 @@ import java.sql.SQLException;
  *
  * @author xuhq0808
  */
-public class SingleThreadConnectionHolder {
+public class ThreadConnectionHolder {
 
     /**
      * 每个线程一个ConnectionHolder
