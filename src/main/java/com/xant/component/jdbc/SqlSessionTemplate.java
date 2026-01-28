@@ -1,7 +1,5 @@
-package com.xant.manager;
+package com.xant.component.jdbc;
 
-import com.xant.component.SqlSessionFactorySingleton;
-import com.xant.component.jdbc.ThreadSqlSession;
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.session.*;
@@ -178,10 +176,15 @@ public class SqlSessionTemplate implements SqlSession {
     private class SqlSessionInterceptor implements InvocationHandler {
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            SqlSession sqlSession = ThreadSqlSession.getOrCreateSqlSession();
+            SqlSession sqlSession = TransactionContextManager.getSqlSession();
+            if (Objects.isNull(sqlSession)) {
+                sqlSession = SqlSessionFactorySingleton.getSqlSession();
+                TransactionContextManager.setSqlSession(sqlSession);
+                TransactionContextManager.setTransactionCallback(List.of(new SqlSessionTransactionCallback(sqlSession)));
+            }
             try {
                 Object result = method.invoke(sqlSession, args);
-                if (!ThreadSqlSession.isInTransaction()) {
+                if (!TransactionContextManager.getInTransaction()) {
                     sqlSession.commit(true);
                 }
                 return result;

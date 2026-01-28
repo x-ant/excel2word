@@ -1,4 +1,4 @@
-package com.xant.component;
+package com.xant.component.jdbc;
 
 import java.util.Map;
 import java.util.Objects;
@@ -24,8 +24,8 @@ public final class ThreadContext {
         getAttributeMap().put(key, value);
     }
 
-    public static void removeAttribute(Object key) {
-        getAttributeMap().remove(key);
+    public static <T> T removeAttribute(Object key) {
+        return (T) getAttributeMap().remove(key);
     }
 
     public static boolean containAttribute(Object key) {

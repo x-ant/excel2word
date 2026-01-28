@@ -6,7 +6,7 @@
 <configuration>
     <environments default="sqlLite">
         <environment id="sqlLite">
-            <transactionManager type="com.xant.component.jdbc.JdbcTransactionFactory"/>
+            <transactionManager type="com.xant.component.jdbc.SpringManagedTransactionFactory"/>
             <dataSource type="com.xant.component.jdbc.HikariCPDataSourceFactory"/>
         </environment>
     </environments>

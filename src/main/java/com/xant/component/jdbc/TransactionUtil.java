@@ -1,10 +1,9 @@
-package com.xant.component;
+package com.xant.component.jdbc;
 
-import com.xant.component.jdbc.ConnectionContext;
-import com.xant.component.jdbc.SqliteSingleton;
 import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -19,7 +18,7 @@ public class TransactionUtil {
     private TransactionUtil() {
     }
 
-    public static <T> T transactionWithRequredi(Supplier<T> supplier) {
+    public static <T> T transactionWithRequired(Supplier<T> supplier) {
         T result = null;
         Connection connection = null;
         Boolean originAutoCommit = null;
@@ -29,14 +28,16 @@ public class TransactionUtil {
             if (originAutoCommit) {
                 connection.setAutoCommit(false);
             }
-            TransactionContext.setInTransaction(true);
+            TransactionContextManager.setInTransaction(true);
 
             result = supplier.get();
 
+            commitCallback();
             connection.commit();
         } catch (Throwable tr) {
             try {
                 if (Objects.nonNull(originAutoCommit)) {
+                    rollbackCallback();
                     connection.rollback();
                 }
             } catch (Throwable tr2) {
@@ -51,12 +52,29 @@ public class TransactionUtil {
                     connection.setAutoCommit(originAutoCommit);
                     connection.close();
                 }
-                TransactionContext.setInTransaction(false);
+                TransactionContextManager.setInTransaction(false);
             } catch (Throwable tr2) {
                 log.error("数据库连接关闭失败！", tr2);
             }
         }
         return result;
+    }
+
+    private static void commitCallback() {
+        List<TransactionCallback> transactionCallback = TransactionContextManager.getTransactionCallback();
+        for (TransactionCallback callback : transactionCallback) {
+            callback.beforeCommit();
+        }
+        for (TransactionCallback callback : transactionCallback) {
+            callback.beforeCompletion();
+        }
+    }
+
+    private static void rollbackCallback() {
+        List<TransactionCallback> transactionCallback = TransactionContextManager.getTransactionCallback();
+        for (TransactionCallback callback : transactionCallback) {
+            callback.beforeCompletion();
+        }
     }
 
 }

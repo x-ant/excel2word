@@ -43,9 +43,9 @@ public class BillAgeUtil {
                 if (Objects.isNull(yearBillPO)) {
                     return;
                 }
-                List<YearBillPO> yearBillList = name2DataListMap.computeIfAbsent(yearBillPO.getName(), k -> new ArrayList<>());
+                List<YearBillPO> yearBillList = name2DataListMap.computeIfAbsent(yearBillPO.getCompany(), k -> new ArrayList<>());
                 yearBillList.add(yearBillPO);
-                if (configPO.getInputFileIsOrderByName() && !lastName.equals(yearBillPO.getName())) {
+                if (configPO.getInputFileIsOrderByName() && !lastName.equals(yearBillPO.getCompany())) {
                     List<YearBillPO> truncateList = doTruncateYearBill(name2DataListMap.remove(lastName));
                     truncateName2DateListMap.put(lastName, truncateList);
                 }
@@ -82,10 +82,10 @@ public class BillAgeUtil {
         for (int i = yearBillList.size() - 1; i >= 0; i--) {
             YearBillPO yearBillPO = yearBillList.get(i);
             resultList.add(yearBillPO);
-            amountCount = amountCount.add(yearBillPO.getAmount());
+            amountCount = amountCount.add(yearBillPO.getRecAmount());
             if (amountCount.compareTo(balance) >= 0) {
-                BigDecimal truncateAmount = yearBillPO.getAmount().subtract(amountCount.subtract(balance));
-                yearBillPO.setAmount(truncateAmount);
+                BigDecimal truncateAmount = yearBillPO.getRecAmount().subtract(amountCount.subtract(balance));
+                yearBillPO.setRecAmount(truncateAmount);
                 break;
             }
         }
@@ -109,13 +109,13 @@ public class BillAgeUtil {
         String yearStr = StrUtil.toStringOrNull(CollUtil.get(rowCellList, configPO.getInputFileYearColIndex()));
         yearBillPO.setYear(Integer.parseInt(yearStr));
 
-        yearBillPO.setName(StrUtil.toStringOrNull(CollUtil.get(rowCellList, configPO.getInputFileNameColIndex())));
+        yearBillPO.setCompany(StrUtil.toStringOrNull(CollUtil.get(rowCellList, configPO.getInputFileNameColIndex())));
 
         String amountStr = StrUtil.toStringOrNull(CollUtil.get(rowCellList, configPO.getInputFileAmountColIndex()));
         if (StrUtil.isEmpty(amountStr)) {
-            yearBillPO.setAmount(BigDecimal.ZERO);
+            yearBillPO.setRecAmount(BigDecimal.ZERO);
         } else {
-            yearBillPO.setAmount(new BigDecimal(amountStr));
+            yearBillPO.setRecAmount(new BigDecimal(amountStr));
         }
 
         String balanceStr = StrUtil.toStringOrNull(CollUtil.get(rowCellList, configPO.getInputFileBalanceColIndex()));

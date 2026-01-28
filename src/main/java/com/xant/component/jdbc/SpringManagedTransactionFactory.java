@@ -13,11 +13,11 @@ import java.util.Properties;
  *
  * @author xuhq
  */
-public class JdbcTransactionFactory implements TransactionFactory {
+public class SpringManagedTransactionFactory implements TransactionFactory {
 
     @Override
     public Transaction newTransaction(DataSource dataSource, TransactionIsolationLevel level, boolean autoCommit) {
-        return new JdbcTransaction(dataSource);
+        return new SpringManagedTransaction(dataSource);
     }
 
     @Override

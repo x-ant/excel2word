@@ -1,7 +1,5 @@
 package com.xant.component.jdbc;
 
-import com.xant.component.ThreadContext;
-
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;

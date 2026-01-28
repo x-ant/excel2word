@@ -1,7 +1,9 @@
-package com.xant.component;
+package com.xant.component.jdbc;
 
 import lombok.Data;
 import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.ExecutorType;
+import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 
@@ -15,9 +17,11 @@ import java.io.InputStream;
 @Data
 public class SqlSessionFactorySingleton {
 
-    private static final String CONFIG_FILE = "chapter1/mybatis-config.xml";
+    private static final String CONFIG_FILE = "mybatis-config.xml";
 
     private static volatile SqlSessionFactory instance;
+
+    private static final ExecutorType executorType = ExecutorType.SIMPLE;
 
     private SqlSessionFactorySingleton() {
     }
@@ -35,6 +39,14 @@ public class SqlSessionFactorySingleton {
             }
         }
         return instance;
+    }
+
+    public static SqlSession getSqlSession(ExecutorType executorType) {
+        return getSingleton().openSession(executorType);
+    }
+
+    public static SqlSession getSqlSession() {
+        return getSingleton().openSession(executorType);
     }
 
 }
