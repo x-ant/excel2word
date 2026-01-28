@@ -9,7 +9,6 @@ import java.util.Objects;
 public class ThreadSqlSession {
 
     private static ThreadLocal<SqlSession> sqlSessionThreadLocal = new ThreadLocal<>();
-    private static ThreadLocal<Boolean> isTransactionThreadLocal = new ThreadLocal<>();
 
     private static final ExecutorType executorType = ExecutorType.SIMPLE;
 
@@ -27,10 +26,6 @@ public class ThreadSqlSession {
 
     public static void clearSqlSession() {
         sqlSessionThreadLocal.remove();
-    }
-
-    public static boolean isInTransaction() {
-        return Boolean.TRUE.equals(isTransactionThreadLocal.get());
     }
 
 }

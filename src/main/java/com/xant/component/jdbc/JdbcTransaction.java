@@ -25,7 +25,7 @@ public class JdbcTransaction implements Transaction {
     }
 
     public Connection getConnection() throws SQLException {
-        return ThreadConnectionHolder.getConnection(dataSource);
+        return ConnectionContext.getConnection(dataSource);
     }
 
     public void commit() throws SQLException {
