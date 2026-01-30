@@ -44,7 +44,7 @@ public class SpringManagedTransaction implements Transaction {
 
     @Override
     public void commit() throws SQLException {
-        if (this.connection != null && !this.isConnectionTransactional && !this.autoCommit) {
+        if (isNotInTransaction()) {
             log.debug("Committing JDBC Connection [" + this.connection + "]");
             this.connection.commit();
         }
@@ -52,7 +52,7 @@ public class SpringManagedTransaction implements Transaction {
 
     @Override
     public void rollback() throws SQLException {
-        if (this.connection != null && !this.isConnectionTransactional && !this.autoCommit) {
+        if (isNotInTransaction()) {
             log.debug("Rolling back JDBC Connection [" + this.connection + "]");
             this.connection.rollback();
         }
@@ -60,7 +60,7 @@ public class SpringManagedTransaction implements Transaction {
 
     @Override
     public void close() throws SQLException {
-        if (this.connection != null && !this.isConnectionTransactional) {
+        if (isNotInTransaction()) {
             log.debug("Closing JDBC Connection [" + this.connection + "]");
             this.connection.close();
         }
@@ -69,6 +69,10 @@ public class SpringManagedTransaction implements Transaction {
     @Override
     public Integer getTimeout() throws SQLException {
         return null;
+    }
+
+    private boolean isNotInTransaction() {
+        return this.connection != null && !this.isConnectionTransactional && !this.autoCommit;
     }
 
 }

@@ -25,7 +25,7 @@ public class ConfigManager {
     private static final String CONFIG_FILE = PROJECT_ROOT + File.separator + "config.json";
 
     private static class SingletonHolder {
-        private static ConfigPO INSTANCE = new ConfigPO();
+        private static final ConfigPO INSTANCE = new ConfigPO();
 
         static {
             File configFile = new File(CONFIG_FILE);

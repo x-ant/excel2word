@@ -14,11 +14,13 @@ import java.util.Objects;
 import static java.lang.reflect.Proxy.newProxyInstance;
 import static org.apache.ibatis.reflection.ExceptionUtil.unwrapThrowable;
 
-public class SqlSessionTemplate implements SqlSession {
+class SqlSessionTemplate implements SqlSession {
 
     private final SqlSession sqlSessionProxy;
+    private final ExecutorType executorType;
 
-    private SqlSessionTemplate() {
+    public SqlSessionTemplate(ExecutorType executorType) {
+        this.executorType = executorType;
         this.sqlSessionProxy = (SqlSession) newProxyInstance(SqlSessionFactory.class.getClassLoader(),
                 new Class[]{SqlSession.class}, new SqlSessionInterceptor());
     }
@@ -160,7 +162,7 @@ public class SqlSessionTemplate implements SqlSession {
 
     @Override
     public Configuration getConfiguration() {
-        return SqlSessionFactorySingleton.getSingleton().getConfiguration();
+        return SqlSessionFactorySingleton.getSqlSessionFactory().getConfiguration();
     }
 
     @Override
@@ -176,20 +178,26 @@ public class SqlSessionTemplate implements SqlSession {
     private class SqlSessionInterceptor implements InvocationHandler {
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            SqlSession sqlSession = TransactionContextManager.getSqlSession();
-            if (Objects.isNull(sqlSession)) {
-                sqlSession = SqlSessionFactorySingleton.getSqlSession();
-                TransactionContextManager.setSqlSession(sqlSession);
-                TransactionContextManager.setTransactionCallback(List.of(new SqlSessionTransactionCallback(sqlSession)));
+            SqlSession defaultSqlSession = TransactionContextManager.getSqlSession();
+            if (Objects.isNull(defaultSqlSession)) {
+                defaultSqlSession = SqlSessionFactorySingleton.getSqlSessionFactory().openSession(executorType);
+                if (TransactionContextManager.getInTransaction()) {
+                    TransactionContextManager.setSqlSession(defaultSqlSession);
+                    TransactionContextManager.setTransactionCallback(List.of(new SqlSessionTransactionCallback(defaultSqlSession)));
+                }
             }
             try {
-                Object result = method.invoke(sqlSession, args);
+                Object result = method.invoke(defaultSqlSession, args);
                 if (!TransactionContextManager.getInTransaction()) {
-                    sqlSession.commit(true);
+                    defaultSqlSession.commit(true);
                 }
                 return result;
             } catch (Throwable t) {
                 throw unwrapThrowable(t);
+            } finally {
+                if (!TransactionContextManager.getInTransaction()) {
+                    defaultSqlSession.close();
+                }
             }
         }
     }

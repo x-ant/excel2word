@@ -6,9 +6,12 @@ import cn.hutool.poi.excel.BigExcelWriter;
 import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.sax.handler.RowHandler;
+import com.xant.component.jdbc.SqlSessionFactorySingleton;
+import com.xant.dao.YearBillMapper;
 import com.xant.entity.YearBillConfigPO;
 import com.xant.entity.YearBillPO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.session.SqlSession;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -30,7 +33,6 @@ public class BillAgeUtil {
 
         Map<String, List<YearBillPO>> name2DataListMap = new HashMap<>();
         List<String> finalSheetNameList = sheetNameList;
-        Map<String, List<YearBillPO>> truncateName2DateListMap = new HashMap<>();
         RowHandler rowHandler = new RowHandler() {
             private int sheetIndexField = 0;
             private String lastName = StrUtil.EMPTY;
@@ -47,7 +49,11 @@ public class BillAgeUtil {
                 yearBillList.add(yearBillPO);
                 if (configPO.getInputFileIsOrderByName() && !lastName.equals(yearBillPO.getCompany())) {
                     List<YearBillPO> truncateList = doTruncateYearBill(name2DataListMap.remove(lastName));
-                    truncateName2DateListMap.put(lastName, truncateList);
+                    SqlSession batchSqlSession = SqlSessionFactorySingleton.getBatchSqlSession();
+                    YearBillMapper yearBillMapper = batchSqlSession.getMapper(YearBillMapper.class);
+
+
+                    lastName = yearBillPO.getCompany();
                 }
             }
 
@@ -68,6 +74,12 @@ public class BillAgeUtil {
         }
     }
 
+    /**
+     * 获取有收入没有被抵消的年份
+     *
+     * @param yearBillList 完整年份
+     * @return 没有被抵消年份的列表
+     */
     private static List<YearBillPO> doTruncateYearBill(List<YearBillPO> yearBillList) {
         // 如果只有名称，都没有年份数据，就是空列表，返回0
         if (CollUtil.isEmpty(yearBillList)) {
@@ -77,7 +89,6 @@ public class BillAgeUtil {
         YearBillPO lastPO = CollUtil.getLast(yearBillList);
         BigDecimal balance = lastPO.getBalance();
         BigDecimal amountCount = BigDecimal.ZERO;
-        Integer targetYear = null;
         List<YearBillPO> resultList = new ArrayList<>();
         for (int i = yearBillList.size() - 1; i >= 0; i--) {
             YearBillPO yearBillPO = yearBillList.get(i);
