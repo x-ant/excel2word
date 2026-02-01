@@ -1,5 +1,7 @@
 package com.xant;
 
+import com.xant.entity.YearBillConfigPO;
+import com.xant.util.BillAgeUtil;
 import io.github.palexdev.materialfx.theming.JavaFXThemes;
 import io.github.palexdev.materialfx.theming.MaterialFXStylesheets;
 import io.github.palexdev.materialfx.theming.UserAgentBuilder;
@@ -20,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MainApplication extends Application {
 
     public static void main(String[] args) {
-        launch(args);
+        BillAgeUtil.truncateYearBill(new YearBillConfigPO());
     }
 
     @Override

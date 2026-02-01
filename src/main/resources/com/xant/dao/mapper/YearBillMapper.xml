@@ -15,49 +15,4 @@
         id,year,company,rec_amount,balance
     </sql>
 
-    <select id="selectById" parameterType="java.lang.String" resultMap="BaseResultMap">
-        select
-        <include refid="Base_Column_List"/>
-        from year_bill
-        where id = #{id,jdbcType=VARCHAR}
-    </select>
-
-    <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.xant.entity.YearBillPO" useGeneratedKeys="true">
-        insert into year_bill (id, year, company, rec_amount, balance)
-        values (#{id,jdbcType=VARCHAR}, #{year,jdbcType=INTEGER}, #{company,jdbcType=VARCHAR},
-                #{recAmount,jdbcType=REAL}, #{balance,jdbcType=REAL})
-    </insert>
-
-    <update id="updateById" parameterType="com.xant.entity.YearBillPO">
-        update year_bill
-        set year = #{year,jdbcType=INTEGER},
-            company = #{company,jdbcType=VARCHAR},
-            rec_amount = #{recAmount,jdbcType=REAL},
-            balance = #{balance,jdbcType=REAL}
-        where id = #{id,jdbcType=VARCHAR}
-    </update>
-
-    <delete id="deleteById" parameterType="java.lang.String">
-        delete from year_bill
-        where id = #{id,jdbcType=VARCHAR}
-    </delete>
-
-    <delete id="deleteByIdList" parameterType="java.util.List">
-        delete from year_bill t
-        <where>
-            <if test="idList != null and idList.size() != 0">
-                t.id in
-                <foreach collection="idList" index="index" item="item" open="(" close=")">
-                    <if test="index != 0">
-                        <choose>
-                            <when test="index % 1000 == 999">) or t.id in(</when>
-                            <otherwise>,</otherwise>
-                        </choose>
-                    </if>
-                    #{item,jdbcType=VARCHAR}
-                </foreach>
-            </if>
-        </where>
-    </delete>
-
 </mapper>

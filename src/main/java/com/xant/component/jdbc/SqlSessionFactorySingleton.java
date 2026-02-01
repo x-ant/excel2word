@@ -34,7 +34,7 @@ public class SqlSessionFactorySingleton {
                     try (InputStream inputStream = Resources.getResourceAsStream(CONFIG_FILE)) {
                         sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
                     } catch (Exception e) {
-                        throw new RuntimeException("数据库配置文件读取失败，请联系管理员！");
+                        throw new RuntimeException("数据库配置文件读取失败，请联系管理员！", e);
                     }
                 }
             }

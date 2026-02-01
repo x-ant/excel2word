@@ -39,6 +39,9 @@ public class BillAgeUtil {
             @Override
             public void handle(int sheetIndex, long rowIndex, List<Object> rowCells) {
                 sheetIndexField = sheetIndex;
+                if (rowIndex < configPO.getInputFileStartRow()) {
+                    return;
+                }
 
                 YearBillPO yearBillPO = buildYearBillPO(rowCells, configPO);
                 if (Objects.isNull(yearBillPO)) {
@@ -119,6 +122,10 @@ public class BillAgeUtil {
 
         int inputFileYearColIndex = ExcelUtil.colNameToIndex(configPO.getInputFileYearCol());
         String yearStr = StrUtil.toStringOrNull(CollUtil.get(rowCellList, inputFileYearColIndex));
+        if (StrUtil.isEmpty(yearStr)) {
+            log.warn("第{}行数据没有年份，跳过处理逻辑", rowCellList);
+            return null;
+        }
         yearBillPO.setYear(Integer.parseInt(yearStr));
 
         int inputFileNameColIndex = ExcelUtil.colNameToIndex(configPO.getInputFileNameCol());

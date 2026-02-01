@@ -21,6 +21,11 @@ public class YearBillConfigPO {
     private Boolean inputFileIsOrderByName = false;
 
     /**
+     * 输入文件开始行
+     */
+    private Integer inputFileStartRow = 2;
+
+    /**
      * 输入文件年份列
      */
     private String inputFileYearCol = "A";
