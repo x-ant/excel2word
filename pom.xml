@@ -31,6 +31,12 @@
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
             <version>7.0.2</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-api</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.mybatis</groupId>
@@ -38,9 +44,20 @@
             <version>3.5.19</version>
         </dependency>
         <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+            <version>3.1.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.uuid</groupId>
             <artifactId>java-uuid-generator</artifactId>
             <version>4.3.0</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-api</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
@@ -65,6 +82,18 @@
                     <artifactId>javafx-fxml</artifactId>
                     <groupId>org.openjfx</groupId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>mfxcore</artifactId>
+                    <groupId>io.github.palexdev</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>mfxeffects</artifactId>
+                    <groupId>io.github.palexdev</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>mfxresources</artifactId>
+                    <groupId>io.github.palexdev</groupId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -80,6 +109,10 @@
                 <exclusion>
                     <artifactId>log4j-api</artifactId>
                     <groupId>org.apache.logging.log4j</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>commons-io</artifactId>
+                    <groupId>commons-io</groupId>
                 </exclusion>
             </exclusions>
         </dependency>

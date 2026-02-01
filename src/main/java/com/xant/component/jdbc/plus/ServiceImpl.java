@@ -1,87 +1,46 @@
 package com.xant.component.jdbc.plus;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.xant.component.jdbc.SqlSessionFactorySingleton;
+import com.xant.component.jdbc.TransactionContextManager;
+import com.xant.component.jdbc.TransactionUtil;
 import com.xant.dao.BaseMapper;
-import org.apache.ibatis.binding.MapperMethod;
-import org.apache.ibatis.logging.Log;
-import org.apache.ibatis.logging.LogFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.ibatis.reflection.ExceptionUtil;
+import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
+import org.slf4j.Logger;
 
-import java.io.Serializable;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
-public class ServiceImpl<M extends BaseMapper<T>, T> implements IService<T> {
-
-    protected Log log = LogFactory.getLog(getClass());
-
-    @Autowired
-    protected M baseMapper;
+@Slf4j
+public abstract class ServiceImpl<M extends BaseMapper<T>, T> implements IService<T> {
 
     @Override
     public M getBaseMapper() {
-        return baseMapper;
+        return (M) SqlSessionFactorySingleton.getSingleSqlSession().getMapper(mapperClass);
     }
 
     protected Class<?> entityClass = currentModelClass();
 
     protected Class<?> mapperClass = currentMapperClass();
 
-    /**
-     * 判断数据库操作是否成功
-     *
-     * @param result 数据库操作返回影响条数
-     * @return boolean
-     * @deprecated 3.3.1
-     */
-    @Deprecated
-    protected boolean retBool(Integer result) {
-        return SqlHelper.retBool(result);
-    }
-
     protected Class<T> currentMapperClass() {
-        return (Class<T>) ReflectionKit.getSuperClassGenericType(getClass(), 0);
+        return (Class<T>) getSuperClassGenericType(getClass(), 0);
     }
 
     protected Class<T> currentModelClass() {
-        return (Class<T>) ReflectionKit.getSuperClassGenericType(getClass(), 1);
-    }
-
-    /**
-     * 批量操作 SqlSession
-     *
-     * @deprecated 3.3.0
-     */
-    @Deprecated
-    protected SqlSession sqlSessionBatch() {
-        return SqlHelper.sqlSessionBatch(entityClass);
-    }
-
-    /**
-     * 释放sqlSession
-     *
-     * @param sqlSession session
-     * @deprecated 3.3.0
-     */
-    @Deprecated
-    protected void closeSqlSession(SqlSession sqlSession) {
-        SqlSessionUtils.closeSqlSession(sqlSession, GlobalConfigUtils.currentSessionFactory(entityClass));
-    }
-
-    /**
-     * 获取 SqlStatement
-     *
-     * @param sqlMethod ignore
-     * @return ignore
-     * @see #getSqlStatement(SqlMethod)
-     * @deprecated 3.4.0
-     */
-    @Deprecated
-    protected String sqlStatement(SqlMethod sqlMethod) {
-        return SqlHelper.table(entityClass).getSqlStatement(sqlMethod.getMethod());
+        return (Class<T>) getSuperClassGenericType(getClass(), 1);
     }
 
     /**
@@ -91,22 +50,12 @@ public class ServiceImpl<M extends BaseMapper<T>, T> implements IService<T> {
      * @param batchSize  ignore
      * @return ignore
      */
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean saveBatch(Collection<T> entityList, int batchSize) {
-        String sqlStatement = getSqlStatement(SqlMethod.INSERT_ONE);
-        return executeBatch(entityList, batchSize, (sqlSession, entity) -> sqlSession.insert(sqlStatement, entity));
-    }
-
-    /**
-     * 获取mapperStatementId
-     *
-     * @param sqlMethod 方法名
-     * @return 命名id
-     * @since 3.4.0
-     */
-    protected String getSqlStatement(SqlMethod sqlMethod) {
-        return SqlHelper.getSqlStatement(mapperClass, sqlMethod);
+        return TransactionUtil.transactionWithRequired(() -> {
+            String sqlStatement = getSqlStatementId("insert");
+            return executeBatch(entityList, batchSize, (sqlSession, entity) -> sqlSession.insert(sqlStatement, entity));
+        });
     }
 
     /**
@@ -115,77 +64,42 @@ public class ServiceImpl<M extends BaseMapper<T>, T> implements IService<T> {
      * @param entity 实体对象
      * @return boolean
      */
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean saveOrUpdate(T entity) {
-        if (null != entity) {
-            TableInfo tableInfo = TableInfoHelper.getTableInfo(this.entityClass);
-            Assert.notNull(tableInfo, "error: can not execute. because can not find cache of TableInfo for entity!");
-            String keyProperty = tableInfo.getKeyProperty();
-            Assert.notEmpty(keyProperty, "error: can not execute. because can not find column for id from entity!");
-            Object idVal = ReflectionKit.getFieldValue(entity, tableInfo.getKeyProperty());
-            return StringUtils.checkValNull(idVal) || Objects.isNull(getById((Serializable) idVal)) ? save(entity) : updateById(entity);
+        if (Objects.nonNull(entity)) {
+            return TransactionUtil.transactionWithRequired(() -> {
+                EntityMetaCache.EntityMeta entityMeta = EntityMetaCache.getEntityMeta(entityClass);
+                EntityMetaCache.ColumnMeta idColumn = entityMeta.getIdColumn();
+                Object idVal = idColumn.getFieldValue(entity);
+                return ObjectUtil.isEmpty(idVal) ? save(entity) : updateById(entity);
+            });
         }
         return false;
     }
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean saveOrUpdateBatch(Collection<T> entityList, int batchSize) {
-        TableInfo tableInfo = TableInfoHelper.getTableInfo(entityClass);
-        Assert.notNull(tableInfo, "error: can not execute. because can not find cache of TableInfo for entity!");
-        String keyProperty = tableInfo.getKeyProperty();
-        Assert.notEmpty(keyProperty, "error: can not execute. because can not find column for id from entity!");
-        return SqlHelper.saveOrUpdateBatch(this.entityClass, this.mapperClass, this.log, entityList, batchSize, (sqlSession, entity) -> {
-            Object idVal = ReflectionKit.getFieldValue(entity, keyProperty);
-            return StringUtils.checkValNull(idVal)
-                    || CollectionUtils.isEmpty(sqlSession.selectList(getSqlStatement(SqlMethod.SELECT_BY_ID), entity));
-        }, (sqlSession, entity) -> {
-            MapperMethod.ParamMap<T> param = new MapperMethod.ParamMap<>();
-            param.put(Constants.ENTITY, entity);
-            sqlSession.update(getSqlStatement(SqlMethod.UPDATE_BY_ID), param);
+        EntityMetaCache.EntityMeta entityMeta = EntityMetaCache.getEntityMeta(entityClass);
+        EntityMetaCache.ColumnMeta idColumn = entityMeta.getIdColumn();
+        return TransactionUtil.transactionWithRequired(() -> {
+            return saveOrUpdateBatch(log, entityList, batchSize, (sqlSession, entity) -> {
+                Object idVal = idColumn.getFieldValue(entity);
+                return ObjectUtil.isEmpty(idVal)
+                        || CollectionUtils.isEmpty(sqlSession.selectList(getSqlStatementId("selectById"), entity));
+            }, (sqlSession, entity) -> {
+                sqlSession.update(getSqlStatementId("updateById"), entity);
+            });
         });
     }
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean updateBatchById(Collection<T> entityList, int batchSize) {
-        String sqlStatement = getSqlStatement(SqlMethod.UPDATE_BY_ID);
-        return executeBatch(entityList, batchSize, (sqlSession, entity) -> {
-            MapperMethod.ParamMap<T> param = new MapperMethod.ParamMap<>();
-            param.put(Constants.ENTITY, entity);
-            sqlSession.update(sqlStatement, param);
+        return TransactionUtil.transactionWithRequired(() -> {
+            String sqlStatement = getSqlStatementId("updateById");
+            return executeBatch(entityList, batchSize, (sqlSession, entity) -> {
+                sqlSession.update(sqlStatement, entity);
+            });
         });
-    }
-
-    @Override
-    public T getOne(Wrapper<T> queryWrapper, boolean throwEx) {
-        if (throwEx) {
-            return baseMapper.selectOne(queryWrapper);
-        }
-        return SqlHelper.getObject(log, baseMapper.selectList(queryWrapper));
-    }
-
-    @Override
-    public Map<String, Object> getMap(Wrapper<T> queryWrapper) {
-        return SqlHelper.getObject(log, baseMapper.selectMaps(queryWrapper));
-    }
-
-    @Override
-    public <V> V getObj(Wrapper<T> queryWrapper, Function<? super Object, V> mapper) {
-        return SqlHelper.getObject(log, listObjs(queryWrapper, mapper));
-    }
-
-    /**
-     * 执行批量操作
-     *
-     * @param consumer consumer
-     * @since 3.3.0
-     * @deprecated 3.3.1 后面我打算移除掉 {@link #executeBatch(Collection, int, BiConsumer)} }.
-     */
-    @Deprecated
-    protected boolean executeBatch(Consumer<SqlSession> consumer) {
-        return SqlHelper.executeBatch(this.entityClass, this.log, consumer);
     }
 
     /**
@@ -199,20 +113,118 @@ public class ServiceImpl<M extends BaseMapper<T>, T> implements IService<T> {
      * @since 3.3.1
      */
     protected <E> boolean executeBatch(Collection<E> list, int batchSize, BiConsumer<SqlSession, E> consumer) {
-        return SqlHelper.executeBatch(this.entityClass, this.log, list, batchSize, consumer);
+        return executeBatch(this.entityClass, log, list, batchSize, consumer);
+    }
+
+    private Class<?> getSuperClassGenericType(final Class<?> clazz, final int index) {
+        Type genType = clazz.getGenericSuperclass();
+        if (!(genType instanceof ParameterizedType)) {
+            log.warn(String.format("Warn: %s's superclass not ParameterizedType", clazz.getSimpleName()));
+            return Object.class;
+        }
+        Type[] params = ((ParameterizedType) genType).getActualTypeArguments();
+        if (index >= params.length || index < 0) {
+            log.warn(String.format("Warn: Index: %s, Size of %s's Parameterized Type: %s .", index,
+                    clazz.getSimpleName(), params.length));
+            return Object.class;
+        }
+        if (!(params[index] instanceof Class)) {
+            log.warn(String.format("Warn: %s not set the actual class on superclass generic parameter",
+                    clazz.getSimpleName()));
+            return Object.class;
+        }
+        return (Class<?>) params[index];
     }
 
     /**
-     * 执行批量操作（默认批次提交数量{@link IService#DEFAULT_BATCH_SIZE}）
+     * 执行批量操作
      *
-     * @param list     数据集合
-     * @param consumer 执行方法
-     * @param <E>      泛型
+     * @param entityClass 实体类
+     * @param log         日志对象
+     * @param list        数据集合
+     * @param batchSize   批次大小
+     * @param consumer    consumer
+     * @param <E>         T
      * @return 操作结果
-     * @since 3.3.1
      */
-    protected <E> boolean executeBatch(Collection<E> list, BiConsumer<SqlSession, E> consumer) {
-        return executeBatch(list, DEFAULT_BATCH_SIZE, consumer);
+    private <E> boolean executeBatch(Class<?> entityClass, Logger log, Collection<E> list, int batchSize, BiConsumer<SqlSession, E> consumer) {
+        Assert.isFalse(batchSize < 1, "batchSize must not be less than one");
+        return !CollUtil.isEmpty(list) && executeBatch(entityClass, log, sqlSession -> {
+            int size = list.size();
+            int i = 1;
+            for (E element : list) {
+                consumer.accept(sqlSession, element);
+                if ((i % batchSize == 0) || i == size) {
+                    sqlSession.flushStatements();
+                }
+                i++;
+            }
+        });
+    }
+
+    /**
+     * 执行批量操作
+     *
+     * @param entityClass 实体
+     * @param log         日志对象
+     * @param consumer    consumer
+     * @return 操作结果
+     */
+    private boolean executeBatch(Class<?> entityClass, Logger log, Consumer<SqlSession> consumer) {
+        boolean transaction = TransactionContextManager.getInTransaction();
+        SqlSession originSqlSession = TransactionContextManager.getSqlSession();
+        if (Objects.nonNull(originSqlSession)) {
+            //原生无法支持执行器切换，当存在批量操作时，会嵌套两个session的，优先commit上一个session
+            //按道理来说，这里的值应该一直为false。
+            originSqlSession.commit(!transaction);
+        }
+        SqlSession sqlSession = SqlSessionFactorySingleton.getSqlSessionFactory().openSession(ExecutorType.BATCH);
+        if (!transaction) {
+            log.warn("SqlSession [" + sqlSession + "] was not registered for synchronization because DataSource is not transactional");
+        }
+        try {
+            consumer.accept(sqlSession);
+            //非事物情况下，强制commit。
+            sqlSession.commit(!transaction);
+            return true;
+        } catch (Throwable t) {
+            sqlSession.rollback();
+            throw new RuntimeException(ExceptionUtil.unwrapThrowable(t));
+        } finally {
+            sqlSession.close();
+        }
+    }
+
+    /**
+     * 批量更新或保存
+     *
+     * @param log       日志对象
+     * @param list      数据集合
+     * @param batchSize 批次大小
+     * @param predicate predicate(新增条件) notNull
+     * @param consumer  consumer（更新处理） notNull
+     * @param <E>       E
+     * @return 操作结果
+     */
+    private <E> boolean saveOrUpdateBatch(Logger log, Collection<E> list, int batchSize, BiPredicate<SqlSession, E> predicate, BiConsumer<SqlSession, E> consumer) {
+        String sqlStatement = getSqlStatementId("insert");
+        return executeBatch(entityClass, log, list, batchSize, (sqlSession, entity) -> {
+            if (predicate.test(sqlSession, entity)) {
+                sqlSession.insert(sqlStatement, entity);
+            } else {
+                consumer.accept(sqlSession, entity);
+            }
+        });
+    }
+
+    /**
+     * 获取mapperStatementId
+     *
+     * @param sqlMethod 方法名
+     * @return 命名id
+     */
+    private String getSqlStatementId(String sqlMethod) {
+        return mapperClass.getName() + StrUtil.DOT + sqlMethod;
     }
 
 }

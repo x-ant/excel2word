@@ -6,12 +6,11 @@ import cn.hutool.poi.excel.BigExcelWriter;
 import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.sax.handler.RowHandler;
-import com.xant.component.jdbc.SqlSessionFactorySingleton;
-import com.xant.dao.YearBillMapper;
+import com.xant.component.jdbc.TransactionUtil;
 import com.xant.entity.YearBillConfigPO;
 import com.xant.entity.YearBillPO;
+import com.xant.manager.YearBillManager;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.session.SqlSession;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -49,10 +48,7 @@ public class BillAgeUtil {
                 yearBillList.add(yearBillPO);
                 if (configPO.getInputFileIsOrderByName() && !lastName.equals(yearBillPO.getCompany())) {
                     List<YearBillPO> truncateList = doTruncateYearBill(name2DataListMap.remove(lastName));
-                    SqlSession batchSqlSession = SqlSessionFactorySingleton.getBatchSqlSession();
-                    YearBillMapper yearBillMapper = batchSqlSession.getMapper(YearBillMapper.class);
-
-
+                    YearBillManager.getInstance().saveBatch(truncateList);
                     lastName = yearBillPO.getCompany();
                 }
             }
@@ -65,13 +61,16 @@ public class BillAgeUtil {
         ExcelUtil.readBySax(configPO.getInputFile(), -1, rowHandler);
 
         // 处理最后一个，或者是整个都处理掉
-        Iterator<Map.Entry<String, List<YearBillPO>>> iterator = name2DataListMap.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<String, List<YearBillPO>> name2DateListEntry = iterator.next();
-            List<YearBillPO> truncateList = doTruncateYearBill(name2DateListEntry.getValue());
-            truncateName2DateListMap.put(name2DateListEntry.getKey(), truncateList);
-            iterator.remove();
-        }
+        TransactionUtil.transactionWithRequired(() -> {
+            Iterator<Map.Entry<String, List<YearBillPO>>> iterator = name2DataListMap.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<String, List<YearBillPO>> name2DateListEntry = iterator.next();
+                List<YearBillPO> truncateList = doTruncateYearBill(name2DateListEntry.getValue());
+                YearBillManager.getInstance().saveBatch(truncateList);
+                iterator.remove();
+            }
+            return Void.TYPE;
+        });
     }
 
     /**
@@ -117,19 +116,24 @@ public class BillAgeUtil {
         if (CollUtil.isEmpty(rowCellList)) {
             return null;
         }
-        String yearStr = StrUtil.toStringOrNull(CollUtil.get(rowCellList, configPO.getInputFileYearColIndex()));
+
+        int inputFileYearColIndex = ExcelUtil.colNameToIndex(configPO.getInputFileYearCol());
+        String yearStr = StrUtil.toStringOrNull(CollUtil.get(rowCellList, inputFileYearColIndex));
         yearBillPO.setYear(Integer.parseInt(yearStr));
 
-        yearBillPO.setCompany(StrUtil.toStringOrNull(CollUtil.get(rowCellList, configPO.getInputFileNameColIndex())));
+        int inputFileNameColIndex = ExcelUtil.colNameToIndex(configPO.getInputFileNameCol());
+        yearBillPO.setCompany(StrUtil.toStringOrNull(CollUtil.get(rowCellList, inputFileNameColIndex)));
 
-        String amountStr = StrUtil.toStringOrNull(CollUtil.get(rowCellList, configPO.getInputFileAmountColIndex()));
+        int inputFileAmountColIndex = ExcelUtil.colNameToIndex(configPO.getInputFileAmountCol());
+        String amountStr = StrUtil.toStringOrNull(CollUtil.get(rowCellList, inputFileAmountColIndex));
         if (StrUtil.isEmpty(amountStr)) {
             yearBillPO.setRecAmount(BigDecimal.ZERO);
         } else {
             yearBillPO.setRecAmount(new BigDecimal(amountStr));
         }
 
-        String balanceStr = StrUtil.toStringOrNull(CollUtil.get(rowCellList, configPO.getInputFileBalanceColIndex()));
+        int inputFileBalanceColIndex = ExcelUtil.colNameToIndex(configPO.getInputFileBalanceCol());
+        String balanceStr = StrUtil.toStringOrNull(CollUtil.get(rowCellList, inputFileBalanceColIndex));
         if (StrUtil.isEmpty(balanceStr)) {
             yearBillPO.setBalance(BigDecimal.ZERO);
         } else {

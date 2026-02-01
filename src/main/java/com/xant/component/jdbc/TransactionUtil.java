@@ -19,6 +19,11 @@ public class TransactionUtil {
     }
 
     public static <T> T transactionWithRequired(Supplier<T> supplier) {
+        // 原本就在事务中就直接调用
+        if (TransactionContextManager.getInTransaction()) {
+            return supplier.get();
+        }
+
         T result = null;
         Connection connection = null;
         Boolean originAutoCommit = null;

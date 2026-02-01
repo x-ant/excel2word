@@ -1,14 +1,13 @@
 package com.xant.component.jdbc.plus;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Assert;
+import com.xant.component.jdbc.TransactionUtil;
 import com.xant.dao.BaseMapper;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public interface IService<T> {
 
@@ -31,9 +30,10 @@ public interface IService<T> {
      *
      * @param entityList 实体对象集合
      */
-    @Transactional(rollbackFor = Exception.class)
     default boolean saveBatch(Collection<T> entityList) {
-        return saveBatch(entityList, DEFAULT_BATCH_SIZE);
+        return TransactionUtil.transactionWithRequired(() -> {
+            return saveBatch(entityList, DEFAULT_BATCH_SIZE);
+        });
     }
 
     /**
@@ -45,13 +45,21 @@ public interface IService<T> {
     boolean saveBatch(Collection<T> entityList, int batchSize);
 
     /**
+     * TableId 注解存在更新记录，否插入一条记录
+     *
+     * @param entity 实体对象
+     */
+    boolean saveOrUpdate(T entity);
+
+    /**
      * 批量修改插入
      *
      * @param entityList 实体对象集合
      */
-    @Transactional(rollbackFor = Exception.class)
     default boolean saveOrUpdateBatch(Collection<T> entityList) {
-        return saveOrUpdateBatch(entityList, DEFAULT_BATCH_SIZE);
+        return TransactionUtil.transactionWithRequired(() -> {
+            return saveOrUpdateBatch(entityList, DEFAULT_BATCH_SIZE);
+        });
     }
 
     /**
@@ -67,8 +75,8 @@ public interface IService<T> {
      *
      * @param id 主键ID
      */
-    default boolean removeById(Serializable id) {
-        return SqlHelper.retBool(getBaseMapper().deleteById(id));
+    default boolean removeById(String id) {
+        return retBool(getBaseMapper().deleteById(id));
     }
 
     /**
@@ -76,11 +84,21 @@ public interface IService<T> {
      *
      * @param idList 主键ID列表
      */
-    default boolean removeByIds(Collection<? extends Serializable> idList) {
-        if (CollectionUtils.isEmpty(idList)) {
+    default boolean removeByIdList(Collection<String> idList) {
+        if (CollUtil.isEmpty(idList)) {
             return false;
         }
-        return retBool(getBaseMapper().deleteBatchIds(idList));
+        return retBool(getBaseMapper().deleteByIdList(idList));
+    }
+
+    /**
+     * 根据 columnMap 条件，删除记录
+     *
+     * @param columnMap 表字段 map 对象
+     */
+    default boolean removeByMap(Map<String, Object> columnMap) {
+        Assert.notEmpty(columnMap, "error: columnMap must not be empty");
+        return retBool(getBaseMapper().deleteByMap(columnMap));
     }
 
     /**
@@ -97,9 +115,10 @@ public interface IService<T> {
      *
      * @param entityList 实体对象集合
      */
-    @Transactional(rollbackFor = Exception.class)
     default boolean updateBatchById(Collection<T> entityList) {
-        return updateBatchById(entityList, DEFAULT_BATCH_SIZE);
+        return TransactionUtil.transactionWithRequired(() -> {
+            return updateBatchById(entityList, DEFAULT_BATCH_SIZE);
+        });
     }
 
     /**
@@ -124,8 +143,17 @@ public interface IService<T> {
      *
      * @param idList 主键ID列表
      */
-    default List<T> listByIds(Collection<? extends Serializable> idList) {
-        return getBaseMapper().selectBatchIds(idList);
+    default List<T> selectByIdList(Collection<String> idList) {
+        return getBaseMapper().selectByIdList(idList);
+    }
+
+    /**
+     * 查询（根据 columnMap 条件）
+     *
+     * @param columnMap 表字段 map 对象
+     */
+    default List<T> selectByMap(Map<String, Object> columnMap) {
+        return getBaseMapper().selectByMap(columnMap);
     }
 
     /**
