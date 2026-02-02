@@ -30,6 +30,7 @@ public class YearBillPO {
      * 对象名称
      */
     private String company;
+    public static final String COMPANY = "company";
 
     /**
      * 年度收入金额

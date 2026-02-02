@@ -1,16 +1,17 @@
-package com.xant.util;
+package com.xant.common.util;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.poi.excel.BigExcelWriter;
 import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
+import cn.hutool.poi.excel.ExcelWriter;
 import cn.hutool.poi.excel.sax.handler.RowHandler;
 import com.xant.component.jdbc.TransactionUtil;
 import com.xant.entity.YearBillConfigPO;
 import com.xant.entity.YearBillPO;
 import com.xant.manager.YearBillManager;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Cell;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -25,7 +26,7 @@ public class BillAgeUtil {
 
     public static void truncateYearBill(YearBillConfigPO configPO) {
 
-        List<String> sheetNameList = new ArrayList<>();
+        /*List<String> sheetNameList = new ArrayList<>();
         try (ExcelReader reader = ExcelUtil.getReader(configPO.getInputFile())) {
             sheetNameList = reader.getSheetNames();
         }
@@ -73,7 +74,9 @@ public class BillAgeUtil {
                 iterator.remove();
             }
             return Void.TYPE;
-        });
+        });*/
+
+        writeYearBill(configPO);
     }
 
     /**
@@ -105,10 +108,21 @@ public class BillAgeUtil {
         return resultList;
     }
 
-    private static void writeYearBill(YearBillConfigPO configPO, Map<String, List<YearBillPO>> truncateName2DateListMap) {
-        try (BigExcelWriter writer = ExcelUtil.getBigWriter(configPO.getOutputFile())) {
+    private static void writeYearBill(YearBillConfigPO configPO) {
+        try (ExcelWriter writer = ExcelUtil.getWriter(configPO.getOutputFile())) {
             writer.setSheet(configPO.getOutputFileSheetName());
+            int outputFileBillAgeFillStartColIndex = ExcelUtil.colNameToIndex(configPO.getOutputFileBillAgeFillStartCol());
+            int outputFileCompanyColIndex = ExcelUtil.colNameToIndex(configPO.getOutputFileCompanyCol());
             for (int i = 0; i < writer.getRowCount(); i++) {
+                Cell nameCell = writer.getCell(i, outputFileCompanyColIndex);
+                String company = nameCell.getStringCellValue();
+                if (StrUtil.isEmpty(company)) {
+                    continue;
+                }
+                List<YearBillPO> yearBillList = YearBillManager.getInstance().queryListByCompany(company);
+                if (CollUtil.isEmpty(yearBillList)) {
+                    continue;
+                }
             }
         }
     }
@@ -128,8 +142,8 @@ public class BillAgeUtil {
         }
         yearBillPO.setYear(Integer.parseInt(yearStr));
 
-        int inputFileNameColIndex = ExcelUtil.colNameToIndex(configPO.getInputFileNameCol());
-        yearBillPO.setCompany(StrUtil.toStringOrNull(CollUtil.get(rowCellList, inputFileNameColIndex)));
+        int inputFileCompanyColIndex = ExcelUtil.colNameToIndex(configPO.getInputFileCompanyCol());
+        yearBillPO.setCompany(StrUtil.toStringOrNull(CollUtil.get(rowCellList, inputFileCompanyColIndex)));
 
         int inputFileAmountColIndex = ExcelUtil.colNameToIndex(configPO.getInputFileAmountCol());
         String amountStr = StrUtil.toStringOrNull(CollUtil.get(rowCellList, inputFileAmountColIndex));

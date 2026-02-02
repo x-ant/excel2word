@@ -3,7 +3,6 @@ package com.xant.component.jdbc.plus;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Assert;
 import com.xant.component.jdbc.TransactionUtil;
-import com.xant.dao.BaseMapper;
 
 import java.util.Collection;
 import java.util.List;
@@ -153,7 +152,7 @@ public interface IService<T> {
      * @param columnMap 表字段 map 对象
      */
     default List<T> selectByMap(Map<String, Object> columnMap) {
-        return getBaseMapper().selectByMap(columnMap);
+        return getBaseMapper().selectByMap(columnMap, null,  null, null);
     }
 
     /**

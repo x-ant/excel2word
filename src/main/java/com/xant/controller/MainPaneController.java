@@ -5,7 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.xant.component.log.TextAreaAppender;
 import com.xant.entity.ConfigPO;
 import com.xant.manager.ConfigManager;
-import com.xant.util.Excel2WordUtil;
+import com.xant.common.util.Excel2WordUtil;
 import io.github.palexdev.materialfx.controls.MFXButton;
 import io.github.palexdev.materialfx.controls.MFXProgressSpinner;
 import io.github.palexdev.materialfx.controls.MFXTextField;

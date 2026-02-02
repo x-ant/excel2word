@@ -33,7 +33,7 @@ public class YearBillConfigPO {
     /**
      * 输入文件对象名称列
      */
-    private String inputFileNameCol = "G";
+    private String inputFileCompanyCol = "G";
 
     /**
      * 输入文件年度收入金额列
@@ -54,6 +54,11 @@ public class YearBillConfigPO {
      * 输出文件sheet名称
      */
     private String outputFileSheetName = "明细表";
+
+    /**
+     * 输出文件对象名称列
+     */
+    private String outputFileCompanyCol = "C";
 
     /**
      * 输出文件账龄填充开始列

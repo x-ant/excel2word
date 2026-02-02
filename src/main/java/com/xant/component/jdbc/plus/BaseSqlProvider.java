@@ -1,14 +1,20 @@
 package com.xant.component.jdbc.plus;
 
 import cn.hutool.core.collection.CollUtil;
-import com.xant.util.UUIDUtil;
-import org.apache.ibatis.annotations.Param;
+import cn.hutool.core.util.StrUtil;
+import com.xant.common.constant.BaseSqlConstant;
+import com.xant.common.util.GenericUtil;
+import com.xant.common.util.UUIDUtil;
+import org.apache.ibatis.builder.annotation.ProviderContext;
 import org.apache.ibatis.jdbc.SQL;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static cn.hutool.json.XMLTokener.entity;
 
 /**
  * 通用SQL提供器
@@ -18,32 +24,27 @@ import java.util.Objects;
 public class BaseSqlProvider {
 
     /**
-     * 使用元数据缓存
-     *
-     * @param clazz 实体类
-     * @return 元数据
+     * 元数据缓存
      */
-    private EntityMetaCache.EntityMeta getEntityMeta(Class<?> clazz) {
-        return EntityMetaCache.getEntityMeta(clazz);
-    }
+    private static final Map<Class<?>, EntityMetaCache.EntityMeta> mapperClass2MetaCache = new ConcurrentHashMap<>();
 
     /**
      * 通用的 selectById 方法
      *
-     * @param entity 实体对象
+     * @param params  查询参数
+     * @param context sql执行上下文
      * @return SQL
      */
-    public String selectById(Object entity) {
-        EntityMetaCache.EntityMeta meta = getEntityMeta(entity.getClass());
-
-        if (meta.getIdColumn() == null) {
+    public String selectById(Map<String, Object> params, ProviderContext context) {
+        EntityMetaCache.EntityMeta entityMeta = getEntityMeta(context);
+        if (entityMeta.getIdColumn() == null) {
             throw new RuntimeException("实体类没有定义主键字段");
         }
 
         SQL sql = new SQL()
-                .SELECT(getSelectColumns(meta))
-                .FROM(meta.getTableName())
-                .WHERE(meta.getIdColumn().getColumnName() + " = #{id}");
+                .SELECT(getSelectColumns(entityMeta))
+                .FROM(entityMeta.getTableName())
+                .WHERE(entityMeta.getIdColumn().getColumnName() + " = #{id}");
 
         return sql.toString();
     }
@@ -51,21 +52,25 @@ public class BaseSqlProvider {
     /**
      * 通用的 selectById 方法
      *
-     * @param idList 主键ID列表
-     * @param entity 实体对象
+     * @param params  查询参数
+     * @param context sql执行上下文
      * @return SQL
      */
-    public String selectByIdList(@Param("idList") Collection<String> idList, Object entity) {
-        EntityMetaCache.EntityMeta meta = getEntityMeta(entity.getClass());
-
-        if (meta.getIdColumn() == null) {
+    public String selectByIdList(Map<String, Object> params, ProviderContext context) {
+        Collection<String> idList = (Collection<String>) params.get(BaseSqlConstant.ID_LIST);
+        if (CollUtil.isEmpty(idList)) {
+            throw new RuntimeException("批量ID查询不能为空");
+        }
+        EntityMetaCache.EntityMeta entityMeta = getEntityMeta(context);
+        if (entityMeta.getIdColumn() == null) {
             throw new RuntimeException("实体类没有定义主键字段");
         }
 
+        // todo 后续处理999问题
         SQL sql = new SQL()
-                .SELECT(getSelectColumns(meta))
-                .FROM(meta.getTableName())
-                .WHERE(meta.getIdColumn().getColumnName() + " IN (#{idList})");
+                .SELECT(getSelectColumns(entityMeta))
+                .FROM(entityMeta.getTableName())
+                .WHERE(entityMeta.getIdColumn().getColumnName() + " IN (#{idList})");
 
         return sql.toString();
     }
@@ -73,15 +78,15 @@ public class BaseSqlProvider {
     /**
      * 通用的INSERT方法
      *
-     * @param entity 实体对象
+     * @param params  查询参数
+     * @param context sql执行上下文
      * @return SQL
      */
-    public String insert(Object entity) {
-        EntityMetaCache.EntityMeta meta = getEntityMeta(entity.getClass());
+    public String insert(Map<String, Object> params, ProviderContext context) {
+        EntityMetaCache.EntityMeta entityMeta = getEntityMeta(context);
+        SQL sql = new SQL().INSERT_INTO(entityMeta.getTableName());
 
-        SQL sql = new SQL().INSERT_INTO(meta.getTableName());
-
-        for (EntityMetaCache.ColumnMeta column : meta.getColumnList()) {
+        for (EntityMetaCache.ColumnMeta column : entityMeta.getColumnList()) {
             // 跳过非插入字段
             if (!column.isInsertable()) {
                 continue;
@@ -92,7 +97,7 @@ public class BaseSqlProvider {
                 column.setFieldValue(entity, UUIDUtil.getUUID());
             }
 
-            sql.VALUES(column.getColumnName(), "#{" + column.getFieldName() + "}");
+            sql.VALUES(column.getColumnName(), "#{" + BaseSqlConstant.ENTITY + StrUtil.DOT + column.getFieldName() + "}");
         }
 
         return sql.toString();
@@ -101,28 +106,28 @@ public class BaseSqlProvider {
     /**
      * 通用的 updateById 方法
      *
-     * @param entity 实体对象
+     * @param params  查询参数
+     * @param context sql执行上下文
      * @return SQL
      */
-    public String updateById(Object entity) {
-        EntityMetaCache.EntityMeta meta = getEntityMeta(entity.getClass());
-
-        if (meta.getIdColumn() == null) {
+    public String updateById(Map<String, Object> params, ProviderContext context) {
+        EntityMetaCache.EntityMeta entityMeta = getEntityMeta(context);
+        if (entityMeta.getIdColumn() == null) {
             throw new RuntimeException("实体类没有定义主键字段");
         }
 
-        SQL sql = new SQL().UPDATE(meta.getTableName());
+        SQL sql = new SQL().UPDATE(entityMeta.getTableName());
 
-        for (EntityMetaCache.ColumnMeta column : meta.getColumnList()) {
+        for (EntityMetaCache.ColumnMeta column : entityMeta.getColumnList()) {
             // 跳过主键和非更新字段
             if (column.isId() || !column.isUpdatable()) {
                 continue;
             }
 
-            sql.SET(column.getColumnName() + " = #{" + column.getFieldName() + "}");
+            sql.SET(column.getColumnName() + " = #{" + BaseSqlConstant.ENTITY + StrUtil.DOT + column.getFieldName() + "}");
         }
 
-        sql.WHERE(meta.getIdColumn().getColumnName() + " = #{id}");
+        sql.WHERE(entityMeta.getIdColumn().getColumnName() + " = #{ " + BaseSqlConstant.ENTITY + StrUtil.DOT + "id}");
 
         return sql.toString();
     }
@@ -130,43 +135,43 @@ public class BaseSqlProvider {
     /**
      * 通用的 deleteById 方法
      *
-     * @param entity 实体对象
+     * @param params  查询参数
+     * @param context sql执行上下文
      * @return SQL
      */
-    public String deleteById(@Param("id") String id, Object entity) {
-        EntityMetaCache.EntityMeta meta = getEntityMeta(entity.getClass());
-
-        if (meta.getIdColumn() == null) {
+    public String deleteById(Map<String, Object> params, ProviderContext context) {
+        EntityMetaCache.EntityMeta entityMeta = getEntityMeta(context);
+        if (entityMeta.getIdColumn() == null) {
             throw new RuntimeException("实体类没有定义主键字段");
         }
 
         return new SQL()
-                .DELETE_FROM(meta.getTableName())
-                .WHERE(meta.getIdColumn().getColumnName() + " = #{id}")
+                .DELETE_FROM(entityMeta.getTableName())
+                .WHERE(entityMeta.getIdColumn().getColumnName() + " = #{id}")
                 .toString();
     }
 
     /**
      * 动态条件查询
      *
-     * @param params 查询参数
+     * @param params  查询参数
+     * @param context sql执行上下文
      * @return SQL
      */
-    public String selectByMap(Map<String, Object> params, Object entity) {
-        Map<String, Object> fieldMap = (Map<String, Object>) params.get("fieldMap");
+    public String selectByMap(Map<String, Object> params, ProviderContext context) {
+        Map<String, Object> fieldMap = (Map<String, Object>) params.get(BaseSqlConstant.FIELD_MAP);
         if (CollUtil.isEmpty(fieldMap)) {
             throw new RuntimeException("查询条件不能为空");
         }
 
-        EntityMetaCache.EntityMeta meta = getEntityMeta(entity.getClass());
-
+        EntityMetaCache.EntityMeta entityMeta = getEntityMeta(context);
         SQL sql = new SQL()
-                .SELECT(getSelectColumns(meta))
-                .FROM(meta.getTableName());
+                .SELECT(getSelectColumns(entityMeta))
+                .FROM(entityMeta.getTableName());
 
         // 动态WHERE条件
         for (Map.Entry<String, Object> field : fieldMap.entrySet()) {
-            EntityMetaCache.ColumnMeta columnMeta = meta.getColumn(field.getKey());
+            EntityMetaCache.ColumnMeta columnMeta = entityMeta.getColumn(field.getKey());
             if (Objects.isNull(columnMeta)) {
                 continue;
             }
@@ -174,34 +179,34 @@ public class BaseSqlProvider {
         }
 
         // 排序
-        addOrderBy(sql, params);
+        addOrderBy(sql, fieldMap);
 
         // 分页
-        addPagination(sql, params);
+        addPagination(sql, fieldMap);
 
         return sql.toString();
     }
 
     /**
-     * 动态条件查询
+     * 动态条件删除
      *
-     * @param params 查询参数
+     * @param params  查询参数
+     * @param context sql执行上下文
      * @return SQL
      */
-    public String deleteByMap(Map<String, Object> params, Object entity) {
-        Map<String, Object> fieldMap = (Map<String, Object>) params.get("fieldMap");
+    public String deleteByMap(Map<String, Object> params, ProviderContext context) {
+        Map<String, Object> fieldMap = (Map<String, Object>) params.get(BaseSqlConstant.FIELD_MAP);
         if (CollUtil.isEmpty(fieldMap)) {
             throw new RuntimeException("查询条件不能为空");
         }
 
-        EntityMetaCache.EntityMeta meta = getEntityMeta(entity.getClass());
-
+        EntityMetaCache.EntityMeta entityMeta = getEntityMeta(context);
         SQL sql = new SQL()
-                .DELETE_FROM(meta.getTableName());
+                .DELETE_FROM(entityMeta.getTableName());
 
         // 动态WHERE条件
         for (Map.Entry<String, Object> field : fieldMap.entrySet()) {
-            EntityMetaCache.ColumnMeta columnMeta = meta.getColumn(field.getKey());
+            EntityMetaCache.ColumnMeta columnMeta = entityMeta.getColumn(field.getKey());
             if (Objects.isNull(columnMeta)) {
                 continue;
             }
@@ -214,23 +219,23 @@ public class BaseSqlProvider {
     /**
      * 动态条件查询
      *
-     * @param params 查询参数
+     * @param params  查询参数
+     * @param context sql执行上下文
      * @return SQL
      */
-    public String selectByCondition(Map<String, Object> params) {
-        Object entity = params.get("entity");
+    public String selectByEntity(Map<String, Object> params, ProviderContext context) {
+        Object entity = params.get(BaseSqlConstant.ENTITY);
         if (entity == null) {
             throw new RuntimeException("查询条件不能为空");
         }
 
-        EntityMetaCache.EntityMeta meta = getEntityMeta(entity.getClass());
-
+        EntityMetaCache.EntityMeta entityMeta = getEntityMeta(context);
         SQL sql = new SQL()
-                .SELECT(getSelectColumns(meta))
-                .FROM(meta.getTableName());
+                .SELECT(getSelectColumns(entityMeta))
+                .FROM(entityMeta.getTableName());
 
         // 动态WHERE条件
-        for (EntityMetaCache.ColumnMeta column : meta.getColumnList()) {
+        for (EntityMetaCache.ColumnMeta column : entityMeta.getColumnList()) {
             try {
                 Object value = column.getFieldValue(entity);
 
@@ -254,16 +259,17 @@ public class BaseSqlProvider {
     /**
      * 批量插入
      */
-    public String deleteByIdList(@Param("idList") Collection<String> idList, Object entity) {
+    public String deleteByIdList(Map<String, Object> params, ProviderContext context) {
+        Collection<String> idList = (Collection<String>) params.get(BaseSqlConstant.ID_LIST);
         if (CollUtil.isEmpty(idList)) {
             throw new RuntimeException("批量删除ID不能为空");
         }
 
-        EntityMetaCache.EntityMeta meta = getEntityMeta(entity.getClass());
+        EntityMetaCache.EntityMeta entityMeta = getEntityMeta(context);
 
         SQL sql = new SQL()
-                .DELETE_FROM(meta.getTableName())
-                .WHERE(meta.getIdColumn().getColumnName() + " IN (#{idList})");
+                .DELETE_FROM(entityMeta.getTableName())
+                .WHERE(entityMeta.getIdColumn().getColumnName() + " IN (#{idList})");
 
         return sql.toString();
     }
@@ -274,19 +280,19 @@ public class BaseSqlProvider {
      * @param params 查询参数
      * @return SQL
      */
-    public String selectPage(Map<String, Object> params) {
-        Object entity = params.get("entity");
-        Integer offset = (Integer) params.get("offset");
-        Integer limit = (Integer) params.get("limit");
+    public String selectPage(Map<String, Object> params, ProviderContext context) {
+        Object entity = params.get(BaseSqlConstant.ENTITY);
+        if (entity == null) {
+            throw new RuntimeException("查询条件不能为空");
+        }
 
-        EntityMetaCache.EntityMeta meta = getEntityMeta(entity.getClass());
-
+        EntityMetaCache.EntityMeta entityMeta = getEntityMeta(context);
         SQL sql = new SQL()
-                .SELECT(getSelectColumns(meta))
-                .FROM(meta.getTableName());
+                .SELECT(getSelectColumns(entityMeta))
+                .FROM(entityMeta.getTableName());
 
         // WHERE条件
-        for (EntityMetaCache.ColumnMeta column : meta.getColumnList()) {
+        for (EntityMetaCache.ColumnMeta column : entityMeta.getColumnList()) {
             try {
                 Object value = column.getFieldValue(entity);
 
@@ -299,14 +305,10 @@ public class BaseSqlProvider {
         }
 
         // 分页
-        if (limit != null && limit > 0) {
-            sql.OFFSET("#{offset}").LIMIT("#{limit}");
-        }
+        addPagination(sql, params);
 
         return sql.toString();
     }
-
-    // ========== 辅助方法 ==========
 
     private String getSelectColumns(EntityMetaCache.EntityMeta meta) {
         StringBuilder columns = new StringBuilder();
@@ -326,39 +328,46 @@ public class BaseSqlProvider {
             // 字符串类型支持模糊查询
             String strValue = (String) value;
             if (strValue.contains("%")) {
-                sql.WHERE(column.getColumnName() + " LIKE #{" + column.getFieldName() + "}");
+                sql.WHERE(column.getColumnName() + " LIKE #{" + BaseSqlConstant.FIELD_MAP + StrUtil.DOT + column.getFieldName() + "}");
             } else {
-                sql.WHERE(column.getColumnName() + " = #{" + column.getFieldName() + "}");
+                sql.WHERE(column.getColumnName() + " = #{" + BaseSqlConstant.FIELD_MAP + StrUtil.DOT + column.getFieldName() + "}");
             }
         } else if (value instanceof Collection) {
             // 集合类型使用IN查询
-            sql.WHERE(column.getColumnName() + " IN (#{" + column.getFieldName() + "})");
+            sql.WHERE(column.getColumnName() + " IN (#{" + BaseSqlConstant.FIELD_MAP + StrUtil.DOT + column.getFieldName() + "})");
         } else {
-            sql.WHERE(column.getColumnName() + " = #{" + column.getFieldName() + "}");
+            sql.WHERE(column.getColumnName() + " = #{" + BaseSqlConstant.FIELD_MAP + StrUtil.DOT + column.getFieldName() + "}");
         }
     }
 
     private void addOrderBy(SQL sql, Map<String, Object> params) {
-        @SuppressWarnings("unchecked")
-        List<String> orderBy = (List<String>) params.get("orderBy");
-
-        if (orderBy != null && !orderBy.isEmpty()) {
-            for (String order : orderBy) {
-                sql.ORDER_BY(order);
-            }
+        List<String> orderByList = (List<String>) params.get(BaseSqlConstant.ORDER_BY_LIST);
+        if (CollUtil.isEmpty(orderByList)) {
+            return;
+        }
+        for (String orderBy : orderByList) {
+            sql.ORDER_BY(orderBy);
         }
     }
 
     private void addPagination(SQL sql, Map<String, Object> params) {
-        Integer offset = (Integer) params.get("offset");
-        Integer limit = (Integer) params.get("limit");
+        Integer offset = (Integer) params.get(BaseSqlConstant.OFFSET);
+        Integer limit = (Integer) params.get(BaseSqlConstant.LIMIT);
 
-        if (limit != null && limit > 0) {
-            if (offset != null && offset > 0) {
+        if (Objects.nonNull(limit) && limit > 0) {
+            if (Objects.nonNull(offset) && offset > 0) {
                 sql.OFFSET("#{offset}").LIMIT("#{limit}");
             } else {
                 sql.LIMIT("#{limit}");
             }
         }
+    }
+
+    private EntityMetaCache.EntityMeta getEntityMeta(ProviderContext context) {
+        Class<?> mapperClass = context.getMapperType();
+        return mapperClass2MetaCache.computeIfAbsent(mapperClass, k -> {
+            Class<?> entityClass = GenericUtil.getInterfacesGenericType(mapperClass, 0);
+            return EntityMetaCache.getEntityMeta(entityClass);
+        });
     }
 }

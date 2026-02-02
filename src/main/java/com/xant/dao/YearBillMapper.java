@@ -1,5 +1,6 @@
 package com.xant.dao;
 
+import com.xant.component.jdbc.plus.BaseMapper;
 import com.xant.entity.YearBillPO;
 
 /**

@@ -29,6 +29,9 @@ public class EntityMetaCache {
         private String tableName;
 
         @Getter
+        private Class<?> entityClass;
+
+        @Getter
         private final List<ColumnMeta> columnList = new ArrayList<>();
 
         @Getter
@@ -101,6 +104,7 @@ public class EntityMetaCache {
      */
     private static EntityMeta parseEntityMeta(Class<?> entityClass) {
         EntityMeta meta = new EntityMeta();
+        meta.entityClass = entityClass;
 
         // 获取表名
         Table table = entityClass.getAnnotation(Table.class);

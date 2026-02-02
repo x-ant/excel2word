@@ -1,4 +1,4 @@
-package com.xant.util;
+package com.xant.common.util;
 
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedEpochGenerator;

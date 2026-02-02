@@ -1,7 +1,7 @@
 package com.xant;
 
 import com.xant.entity.YearBillConfigPO;
-import com.xant.util.BillAgeUtil;
+import com.xant.common.util.BillAgeUtil;
 import io.github.palexdev.materialfx.theming.JavaFXThemes;
 import io.github.palexdev.materialfx.theming.MaterialFXStylesheets;
 import io.github.palexdev.materialfx.theming.UserAgentBuilder;

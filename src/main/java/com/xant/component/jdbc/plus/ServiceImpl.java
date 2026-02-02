@@ -7,7 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import com.xant.component.jdbc.SqlSessionFactorySingleton;
 import com.xant.component.jdbc.TransactionContextManager;
 import com.xant.component.jdbc.TransactionUtil;
-import com.xant.dao.BaseMapper;
+import com.xant.common.util.GenericUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.ibatis.reflection.ExceptionUtil;
@@ -15,8 +15,6 @@ import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.slf4j.Logger;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -36,11 +34,11 @@ public abstract class ServiceImpl<M extends BaseMapper<T>, T> implements IServic
     protected Class<?> mapperClass = currentMapperClass();
 
     protected Class<T> currentMapperClass() {
-        return (Class<T>) getSuperClassGenericType(getClass(), 0);
+        return (Class<T>) GenericUtil.getSuperClassGenericType(getClass(), 0);
     }
 
     protected Class<T> currentModelClass() {
-        return (Class<T>) getSuperClassGenericType(getClass(), 1);
+        return (Class<T>) GenericUtil.getSuperClassGenericType(getClass(), 1);
     }
 
     /**
@@ -114,26 +112,6 @@ public abstract class ServiceImpl<M extends BaseMapper<T>, T> implements IServic
      */
     protected <E> boolean executeBatch(Collection<E> list, int batchSize, BiConsumer<SqlSession, E> consumer) {
         return executeBatch(this.entityClass, log, list, batchSize, consumer);
-    }
-
-    private Class<?> getSuperClassGenericType(final Class<?> clazz, final int index) {
-        Type genType = clazz.getGenericSuperclass();
-        if (!(genType instanceof ParameterizedType)) {
-            log.warn(String.format("Warn: %s's superclass not ParameterizedType", clazz.getSimpleName()));
-            return Object.class;
-        }
-        Type[] params = ((ParameterizedType) genType).getActualTypeArguments();
-        if (index >= params.length || index < 0) {
-            log.warn(String.format("Warn: Index: %s, Size of %s's Parameterized Type: %s .", index,
-                    clazz.getSimpleName(), params.length));
-            return Object.class;
-        }
-        if (!(params[index] instanceof Class)) {
-            log.warn(String.format("Warn: %s not set the actual class on superclass generic parameter",
-                    clazz.getSimpleName()));
-            return Object.class;
-        }
-        return (Class<?>) params[index];
     }
 
     /**
