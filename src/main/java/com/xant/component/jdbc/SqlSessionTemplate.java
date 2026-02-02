@@ -14,7 +14,15 @@ import java.util.Objects;
 import static java.lang.reflect.Proxy.newProxyInstance;
 import static org.apache.ibatis.reflection.ExceptionUtil.unwrapThrowable;
 
-class SqlSessionTemplate implements SqlSession {
+/**
+ * 目标
+ * 1、统一创建并管理sqlSession
+ * 2、在事务中能创建并复用sqlSession并埋入sqlSession生命周期回调
+ * 2、在非事务中完成整个sqlSession的生命周期，保证作用于单个sql
+ *
+ * @author xuhq
+ */
+public class SqlSessionTemplate implements SqlSession {
 
     private final SqlSession sqlSessionProxy;
     private final ExecutorType executorType;

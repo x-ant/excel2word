@@ -9,6 +9,14 @@ import java.sql.SQLException;
 
 import static cn.hutool.core.lang.Assert.notNull;
 
+/**
+ * 代理的实际是数据库连接
+ * 功能
+ * 1、从线程变量中获取数据库连接，如果有则复用没有则创建
+ * 2、数据库连接的操作补充事务判断，如果在事务中则不进行操作，由事务管理器进行控制
+ *
+ * @author xuhq
+ */
 @Slf4j
 public class SpringManagedTransaction implements Transaction {
 
@@ -71,6 +79,14 @@ public class SpringManagedTransaction implements Transaction {
         return null;
     }
 
+    /**
+     * 当前数据库连接不在事务中
+     * 1、数据库连接不为空
+     * 2、数据库连接不是自动提交，否则就不用操作了
+     * 3、数据库连接不在事务中，事务中的由事务控制
+     *
+     * @return boolean
+     */
     private boolean isNotInTransaction() {
         return this.connection != null && !this.isConnectionTransactional && !this.autoCommit;
     }

@@ -52,12 +52,15 @@ public class TransactionUtil {
             throw new RuntimeException(tr);
         } finally {
             try {
+                TransactionContextManager.setInTransaction(false);
+                TransactionContextManager.clearTransactionCallback();
                 ConnectionContext.removeConnection(SqliteSingleton.getSingleton());
                 if (Objects.nonNull(originAutoCommit)) {
                     connection.setAutoCommit(originAutoCommit);
+                }
+                if (Objects.nonNull(connection)) {
                     connection.close();
                 }
-                TransactionContextManager.setInTransaction(false);
             } catch (Throwable tr2) {
                 log.error("数据库连接关闭失败！", tr2);
             }
