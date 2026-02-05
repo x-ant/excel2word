@@ -4,6 +4,7 @@ import com.xant.component.jdbc.plus.ServiceImpl;
 import com.xant.dao.YearBillMapper;
 import com.xant.entity.YearBillPO;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +22,7 @@ public class YearBillManager extends ServiceImpl<YearBillMapper, YearBillPO> {
     }
 
     public List<YearBillPO> queryListByCompany(String company) {
-        return this.selectByMap(Map.of(YearBillPO.COMPANY, company));
+        return this.selectByMap(Map.of(YearBillPO.COMPANY, company), Collections.singletonList(YearBillPO.YEAR));
     }
 
 }

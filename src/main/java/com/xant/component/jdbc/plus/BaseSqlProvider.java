@@ -14,8 +14,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static cn.hutool.json.XMLTokener.entity;
-
 /**
  * 通用SQL提供器
  *
@@ -78,11 +76,11 @@ public class BaseSqlProvider {
     /**
      * 通用的INSERT方法
      *
-     * @param params  查询参数
+     * @param entity  实体类
      * @param context sql执行上下文
      * @return SQL
      */
-    public String insert(Map<String, Object> params, ProviderContext context) {
+    public String insert(Object entity, ProviderContext context) {
         EntityMetaCache.EntityMeta entityMeta = getEntityMeta(context);
         SQL sql = new SQL().INSERT_INTO(entityMeta.getTableName());
 
@@ -97,7 +95,7 @@ public class BaseSqlProvider {
                 column.setFieldValue(entity, UUIDUtil.getUUID());
             }
 
-            sql.VALUES(column.getColumnName(), "#{" + BaseSqlConstant.ENTITY + StrUtil.DOT + column.getFieldName() + "}");
+            sql.VALUES(column.getColumnName(), "#{" + column.getFieldName() + "}");
         }
 
         return sql.toString();
@@ -175,7 +173,7 @@ public class BaseSqlProvider {
             if (Objects.isNull(columnMeta)) {
                 continue;
             }
-            addWhereCondition(sql, columnMeta, field.getValue());
+            addWhereCondition(sql, BaseSqlConstant.FIELD_MAP, columnMeta, field.getValue());
         }
 
         // 排序
@@ -210,7 +208,7 @@ public class BaseSqlProvider {
             if (Objects.isNull(columnMeta)) {
                 continue;
             }
-            addWhereCondition(sql, columnMeta, field.getValue());
+            addWhereCondition(sql, BaseSqlConstant.FIELD_MAP, columnMeta, field.getValue());
         }
 
         return sql.toString();
@@ -240,7 +238,7 @@ public class BaseSqlProvider {
                 Object value = column.getFieldValue(entity);
 
                 if (value != null) {
-                    addWhereCondition(sql, column, value);
+                    addWhereCondition(sql, BaseSqlConstant.ENTITY, column, value);
                 }
             } catch (Exception e) {
                 throw new RuntimeException("无法访问字段: " + column.getFieldName(), e);
@@ -297,7 +295,7 @@ public class BaseSqlProvider {
                 Object value = column.getFieldValue(entity);
 
                 if (value != null) {
-                    addWhereCondition(sql, column, value);
+                    addWhereCondition(sql, BaseSqlConstant.ENTITY, column, value);
                 }
             } catch (Exception e) {
                 throw new RuntimeException("无法访问字段: " + column.getFieldName(), e);
@@ -323,20 +321,21 @@ public class BaseSqlProvider {
         return columns.toString();
     }
 
-    private void addWhereCondition(SQL sql, EntityMetaCache.ColumnMeta column, Object value) {
+    private void addWhereCondition(SQL sql, String prefix, EntityMetaCache.ColumnMeta column, Object value) {
+        String realPrefix = StrUtil.isEmpty(prefix) ? StrUtil.EMPTY : prefix + StrUtil.DOT;
         if (value instanceof String) {
             // 字符串类型支持模糊查询
             String strValue = (String) value;
             if (strValue.contains("%")) {
-                sql.WHERE(column.getColumnName() + " LIKE #{" + BaseSqlConstant.FIELD_MAP + StrUtil.DOT + column.getFieldName() + "}");
+                sql.WHERE(column.getColumnName() + " LIKE #{" + realPrefix + column.getFieldName() + "}");
             } else {
-                sql.WHERE(column.getColumnName() + " = #{" + BaseSqlConstant.FIELD_MAP + StrUtil.DOT + column.getFieldName() + "}");
+                sql.WHERE(column.getColumnName() + " = #{" + realPrefix + column.getFieldName() + "}");
             }
         } else if (value instanceof Collection) {
             // 集合类型使用IN查询
-            sql.WHERE(column.getColumnName() + " IN (#{" + BaseSqlConstant.FIELD_MAP + StrUtil.DOT + column.getFieldName() + "})");
+            sql.WHERE(column.getColumnName() + " IN (#{" + realPrefix + column.getFieldName() + "})");
         } else {
-            sql.WHERE(column.getColumnName() + " = #{" + BaseSqlConstant.FIELD_MAP + StrUtil.DOT + column.getFieldName() + "}");
+            sql.WHERE(column.getColumnName() + " = #{" + realPrefix + column.getFieldName() + "}");
         }
     }
 

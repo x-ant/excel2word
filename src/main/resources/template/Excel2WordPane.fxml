@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.Font?>
 
-<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="720.0" styleClass="grid-pane" stylesheets="@../style/Buttons.css" xmlns="http://javafx.com/javafx/21.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.xant.controller.MainPaneController">
+<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #f0ed97;" styleClass="grid-pane" stylesheets="@../style/Buttons.css" xmlns="http://javafx.com/javafx/21.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.xant.controller.Excel2WordPaneController">
   <columnConstraints>
       <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
     <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
@@ -37,28 +37,27 @@
       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
       <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
   </rowConstraints>
    <children>
-      <Label alignment="CENTER_RIGHT" prefHeight="50.0" prefWidth="178.0" text="模板word文件：" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.valignment="CENTER">
+      <Label alignment="CENTER_RIGHT" prefHeight="50.0" prefWidth="178.0" text="模板word文件：" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.valignment="CENTER">
          <font>
             <Font name="System Bold" size="12.0" />
          </font></Label>
-      <MFXTextField fx:id="templateFile" floatMode="BORDER" prefHeight="38.0" prefWidth="403.0" styleClass="mfx-text-field" GridPane.columnIndex="3" GridPane.columnSpan="6" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.valignment="CENTER">
+      <MFXTextField fx:id="templateFile" floatMode="BORDER" prefHeight="38.0" prefWidth="403.0" styleClass="mfx-text-field" GridPane.columnIndex="3" GridPane.columnSpan="6" GridPane.hgrow="ALWAYS" GridPane.valignment="CENTER">
          <GridPane.margin>
             <Insets />
          </GridPane.margin>
       </MFXTextField>
-      <Label alignment="CENTER_RIGHT" prefHeight="50.0" prefWidth="170.0" text="Excel文件夹：" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.valignment="CENTER">
+      <Label alignment="CENTER_RIGHT" prefHeight="50.0" prefWidth="170.0" text="Excel文件夹：" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.valignment="CENTER">
          <font>
             <Font name="System Bold" size="12.0" />
          </font></Label>
-      <MFXTextField fx:id="inputDir" floatMode="BORDER" prefHeight="38.0" prefWidth="392.0" styleClass="mfx-text-field" GridPane.columnIndex="3" GridPane.columnSpan="6" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.valignment="CENTER">
+      <MFXTextField fx:id="inputDir" floatMode="BORDER" prefHeight="38.0" prefWidth="392.0" styleClass="mfx-text-field" GridPane.columnIndex="3" GridPane.columnSpan="6" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.valignment="CENTER">
          <GridPane.margin>
             <Insets />
          </GridPane.margin>
       </MFXTextField>
-      <StackPane GridPane.columnIndex="4" GridPane.columnSpan="4" GridPane.hgrow="ALWAYS" GridPane.rowIndex="4">
+      <StackPane GridPane.columnIndex="4" GridPane.columnSpan="4" GridPane.hgrow="ALWAYS" GridPane.rowIndex="3">
          <GridPane.margin>
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
          </GridPane.margin>
@@ -71,31 +70,31 @@
             </MFXProgressSpinner>
          </children>
       </StackPane>
-      <MFXButton fx:id="templateFileChooser" onMouseClicked="#templateFileChoose" prefHeight="25.0" prefWidth="107.0" styleClass="outline-button" text="选择" GridPane.columnIndex="9" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.valignment="CENTER">
+      <MFXButton fx:id="templateFileChooser" onMouseClicked="#templateFileChoose" prefHeight="25.0" prefWidth="107.0" styleClass="outline-button" text="选择" GridPane.columnIndex="9" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.valignment="CENTER">
          <GridPane.margin>
             <Insets left="10.0" right="10.0" />
          </GridPane.margin></MFXButton>
-      <MFXButton fx:id="inputDirChooser" onMouseClicked="#inputDirChoose" prefHeight="25.0" prefWidth="111.0" styleClass="outline-button" text="选择" GridPane.columnIndex="9" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.valignment="CENTER">
+      <MFXButton fx:id="inputDirChooser" onMouseClicked="#inputDirChoose" prefHeight="25.0" prefWidth="111.0" styleClass="outline-button" text="选择" GridPane.columnIndex="9" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1" GridPane.valignment="CENTER">
          <GridPane.margin>
             <Insets left="10.0" right="10.0" />
          </GridPane.margin></MFXButton>
-      <Label alignment="CENTER_RIGHT" prefHeight="50.0" prefWidth="185.0" text="Word文件夹：" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="3" GridPane.valignment="CENTER">
+      <Label alignment="CENTER_RIGHT" prefHeight="50.0" prefWidth="185.0" text="Word文件夹：" GridPane.columnIndex="1" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.valignment="CENTER">
          <font>
             <Font name="System Bold" size="12.0" />
          </font>
       </Label>
-      <MFXTextField fx:id="outputDir" floatMode="BORDER" layoutX="160.0" layoutY="116.0" prefHeight="38.0" prefWidth="366.0" styleClass="mfx-text-field" GridPane.columnIndex="3" GridPane.columnSpan="6" GridPane.hgrow="ALWAYS" GridPane.rowIndex="3" GridPane.valignment="CENTER" />
-      <MFXButton fx:id="outputDirChooser" layoutX="470.0" layoutY="122.0" onMouseClicked="#outputDirChoose" prefHeight="25.0" prefWidth="111.0" styleClass="outline-button" text="选择" GridPane.columnIndex="9" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="3" GridPane.valignment="CENTER">
+      <MFXTextField fx:id="outputDir" floatMode="BORDER" layoutX="160.0" layoutY="116.0" prefHeight="38.0" prefWidth="366.0" styleClass="mfx-text-field" GridPane.columnIndex="3" GridPane.columnSpan="6" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.valignment="CENTER" />
+      <MFXButton fx:id="outputDirChooser" layoutX="470.0" layoutY="122.0" onMouseClicked="#outputDirChoose" prefHeight="25.0" prefWidth="111.0" styleClass="outline-button" text="选择" GridPane.columnIndex="9" GridPane.columnSpan="2" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2" GridPane.valignment="CENTER">
          <GridPane.margin>
             <Insets left="10.0" right="10.0" />
          </GridPane.margin>
       </MFXButton>
-      <MFXButton id="custom" fx:id="defaultButton" disable="true" onMouseClicked="#defaultButtonSave" prefHeight="30.0" prefWidth="187.0" styleClass="outline-button" text="保存为默认配置" GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="4">
+      <MFXButton id="custom" fx:id="defaultButton" disable="true" onMouseClicked="#defaultButtonSave" prefHeight="30.0" prefWidth="187.0" styleClass="outline-button" text="保存为默认配置" GridPane.columnIndex="1" GridPane.columnSpan="3" GridPane.rowIndex="3">
          <GridPane.margin>
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
          </GridPane.margin>
       </MFXButton>
-      <TextArea fx:id="logTextArea" editable="false" prefHeight="50.0" prefWidth="284.0" GridPane.columnSpan="12" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="5" GridPane.rowSpan="3" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS">
+      <TextArea fx:id="logTextArea" editable="false" prefHeight="50.0" prefWidth="284.0" GridPane.columnSpan="12" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.rowIndex="4" GridPane.rowSpan="3" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS">
          <padding>
             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
          </padding>

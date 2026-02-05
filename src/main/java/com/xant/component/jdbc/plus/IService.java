@@ -152,7 +152,16 @@ public interface IService<T> {
      * @param columnMap 表字段 map 对象
      */
     default List<T> selectByMap(Map<String, Object> columnMap) {
-        return getBaseMapper().selectByMap(columnMap, null,  null, null);
+        return getBaseMapper().selectByMap(columnMap, null, null, null);
+    }
+
+    /**
+     * 查询（根据 columnMap 条件）
+     *
+     * @param columnMap 表字段 map 对象
+     */
+    default List<T> selectByMap(Map<String, Object> columnMap, List<String> orderByList) {
+        return getBaseMapper().selectByMap(columnMap, orderByList, null, null);
     }
 
     /**

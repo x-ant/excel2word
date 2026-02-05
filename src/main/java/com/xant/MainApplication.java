@@ -1,7 +1,5 @@
 package com.xant;
 
-import com.xant.entity.YearBillConfigPO;
-import com.xant.common.util.BillAgeUtil;
 import io.github.palexdev.materialfx.theming.JavaFXThemes;
 import io.github.palexdev.materialfx.theming.MaterialFXStylesheets;
 import io.github.palexdev.materialfx.theming.UserAgentBuilder;
@@ -22,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MainApplication extends Application {
 
     public static void main(String[] args) {
-        BillAgeUtil.truncateYearBill(new YearBillConfigPO());
+        launch(args);
     }
 
     @Override
@@ -42,8 +40,8 @@ public class MainApplication extends Application {
 
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/template/MainPane.fxml"));
         Scene scene = new Scene(fxmlLoader.load());
-        stage.getIcons().add(new Image("/icon/excel2word.png"));
-        stage.setTitle("Excel2Word");
+        stage.getIcons().add(new Image("/icon/auditool.png"));
+        stage.setTitle("Auditool");
         stage.setScene(scene);
         stage.setResizable(false);
         stage.show();

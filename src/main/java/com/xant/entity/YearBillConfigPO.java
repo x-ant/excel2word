@@ -16,11 +16,6 @@ public class YearBillConfigPO {
     private String inputFile = "D:\\exe4j\\辅助核算汇总表查询结果.xls";
 
     /**
-     * 是否按名称排序
-     */
-    private Boolean inputFileIsOrderByName = false;
-
-    /**
      * 输入文件开始行
      */
     private Integer inputFileStartRow = 2;
@@ -36,6 +31,11 @@ public class YearBillConfigPO {
     private String inputFileCompanyCol = "G";
 
     /**
+     * 是否按名称排序
+     */
+    private Boolean inputFileIsOrderByName = false;
+
+    /**
      * 输入文件年度收入金额列
      */
     private String inputFileAmountCol = "J";
@@ -48,12 +48,17 @@ public class YearBillConfigPO {
     /**
      * 输出文件
      */
-    private String outputFile = "D:\\exe4j\\4280其他应收款基础表格(1).xls";
+    private String outputFile = "D:\\exe4j\\4280其他应收款基础表格(2).xls";
 
     /**
      * 输出文件sheet名称
      */
     private String outputFileSheetName = "明细表";
+
+    /**
+     * 输出文件开始行
+     */
+    private Integer outputFileStartRow = 9;
 
     /**
      * 输出文件对象名称列

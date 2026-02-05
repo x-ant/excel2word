@@ -25,6 +25,7 @@ public class YearBillPO {
      * 年份
      */
     private Integer year;
+    public static final String YEAR = "year";
 
     /**
      * 对象名称

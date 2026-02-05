@@ -1,6 +1,7 @@
 package com.xant.common.util;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
@@ -24,9 +25,21 @@ import java.util.*;
 @Slf4j
 public class BillAgeUtil {
 
-    public static void truncateYearBill(YearBillConfigPO configPO) {
+    /**
+     * 生成账龄
+     *
+     * @param configPO 配置信息
+     */
+    public static void generateYearBill(YearBillConfigPO configPO) {
+        // todo 补充重命名逻辑
+        FileUtil.copy(configPO.getOutputFile(), configPO.getOutputFile() + ".bak", true);
 
-        /*List<String> sheetNameList = new ArrayList<>();
+        readYearBill(configPO);
+        writeYearBill(configPO);
+    }
+
+    private static void readYearBill(YearBillConfigPO configPO) {
+        List<String> sheetNameList = new ArrayList<>();
         try (ExcelReader reader = ExcelUtil.getReader(configPO.getInputFile())) {
             sheetNameList = reader.getSheetNames();
         }
@@ -74,9 +87,7 @@ public class BillAgeUtil {
                 iterator.remove();
             }
             return Void.TYPE;
-        });*/
-
-        writeYearBill(configPO);
+        });
     }
 
     /**
@@ -113,8 +124,12 @@ public class BillAgeUtil {
             writer.setSheet(configPO.getOutputFileSheetName());
             int outputFileBillAgeFillStartColIndex = ExcelUtil.colNameToIndex(configPO.getOutputFileBillAgeFillStartCol());
             int outputFileCompanyColIndex = ExcelUtil.colNameToIndex(configPO.getOutputFileCompanyCol());
-            for (int i = 0; i < writer.getRowCount(); i++) {
-                Cell nameCell = writer.getCell(i, outputFileCompanyColIndex);
+            int startRow = Math.max(configPO.getOutputFileStartRow(), 1) - 1;
+            for (int rowIndex = startRow; rowIndex < writer.getRowCount(); rowIndex++) {
+                Cell nameCell = writer.getCell(outputFileCompanyColIndex, rowIndex);
+                if (Objects.isNull(nameCell)) {
+                    continue;
+                }
                 String company = nameCell.getStringCellValue();
                 if (StrUtil.isEmpty(company)) {
                     continue;
@@ -123,10 +138,13 @@ public class BillAgeUtil {
                 if (CollUtil.isEmpty(yearBillList)) {
                     continue;
                 }
+                for (int j = 0; j < yearBillList.size(); j++) {
+                    Cell balanceCell = writer.getCell(outputFileBillAgeFillStartColIndex + j, rowIndex);
+                    balanceCell.setCellValue(StrUtil.toStringOrNull(yearBillList.get(j).getBalance()));
+                }
             }
         }
     }
-
 
     private static YearBillPO buildYearBillPO(List<Object> rowCellList, YearBillConfigPO configPO) {
         YearBillPO yearBillPO = new YearBillPO();
@@ -162,6 +180,5 @@ public class BillAgeUtil {
         }
         return yearBillPO;
     }
-
 
 }
